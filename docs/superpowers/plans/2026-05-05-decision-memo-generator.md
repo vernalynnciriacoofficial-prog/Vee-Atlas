@@ -51,12 +51,12 @@ apps/decision-memo/
 
 ---
 
-## Task 1: Project Scaffold
+## Task 1: Project Scaffold ✅ COMPLETE
 
 **Files:**
 - Create: `apps/decision-memo/` (full scaffold)
 
-- [ ] **Step 1: Scaffold the Vite + React project**
+- [x] **Step 1: Scaffold the Vite + React project**
 
 Run from inside `apps/`:
 ```bash
@@ -183,7 +183,7 @@ git commit -m "feat: scaffold decision-memo Vite + React + Tailwind + Vitest"
 
 ---
 
-## Task 2: JSON Validation Utility (TDD)
+## Task 2: JSON Validation Utility (TDD) ✅ COMPLETE
 
 **Files:**
 - Create: `apps/decision-memo/src/utils/validateJson.js`
@@ -370,7 +370,7 @@ git commit -m "feat: add JSON validation utility for Claude responses"
 
 ---
 
-## Task 3: Claude Prompts (TDD)
+## Task 3: Claude Prompts (TDD) ✅ COMPLETE
 
 **Files:**
 - Create: `apps/decision-memo/src/prompts/extractStructure.js`
@@ -556,7 +556,7 @@ git commit -m "feat: add Claude prompt builders for extract and generate calls"
 
 ---
 
-## Task 4: useClaude Hook (TDD)
+## Task 4: useClaude Hook (TDD) ✅ COMPLETE
 
 **Files:**
 - Create: `apps/decision-memo/src/hooks/useClaude.js`
