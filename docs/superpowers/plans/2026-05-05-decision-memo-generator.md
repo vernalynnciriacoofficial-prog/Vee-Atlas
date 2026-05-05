@@ -2,1906 +2,1617 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a client-side React web app where users describe a decision their exec needs to make, get a structured editable one-pager memo with options, pros/cons, risk levels, and a recommendation — exportable as PDF.
+**Goal:** Build a client-side React web app that converts a free-text executive decision description into an editable, print-ready one-pager via two Claude API calls.
 
-**Architecture:** Three-step flow managed in App.jsx. Step 1: free text input → Claude API call extracts structure. Step 2: user reviews/edits AI-prefilled structured form. Step 3: Claude generates full memo, rendered as a `contenteditable` document with print/PDF export. API key stored in localStorage.
+**Architecture:** Three-step flow — (1) free-text input, Claude extracts structured JSON; (2) user reviews and edits the structured form; (3) Claude generates the full memo, which renders as a `contenteditable` document. No backend; Claude API called directly from the browser using `@anthropic-ai/sdk` with `dangerouslyAllowBrowser: true`. API key stored in `localStorage`.
 
-**Tech Stack:** React 18, Vite 5, Tailwind CSS v3, Vitest, @testing-library/react, @testing-library/jest-dom, jsdom
+**Tech Stack:** React 18, Vite 5, Tailwind CSS 3, `@anthropic-ai/sdk`, Vitest, `@testing-library/react`
+
+**Spec:** `docs/superpowers/specs/2026-05-05-decision-memo-generator-design.md`
 
 ---
 
 ## File Map
 
-**Create:**
-- `decision-memo/index.html`
-- `decision-memo/package.json`
-- `decision-memo/vite.config.js`
-- `decision-memo/tailwind.config.js`
-- `decision-memo/postcss.config.js`
-- `decision-memo/src/main.jsx`
-- `decision-memo/src/index.css`
-- `decision-memo/src/test-setup.js`
-- `decision-memo/src/App.jsx`
-- `decision-memo/src/styles/print.css`
-- `decision-memo/src/utils/validateStructure.js` + `.test.js`
-- `decision-memo/src/utils/validateMemo.js` + `.test.js`
-- `decision-memo/src/prompts/extractStructure.js`
-- `decision-memo/src/prompts/generateMemo.js`
-- `decision-memo/src/hooks/useClaude.js` + `.test.js`
-- `decision-memo/src/components/ApiKeyGate.jsx` + `.test.jsx`
-- `decision-memo/src/components/Step1_FreeText.jsx` + `.test.jsx`
-- `decision-memo/src/components/Step2_StructuredForm.jsx` + `.test.jsx`
-- `decision-memo/src/components/RiskBadge.jsx` + `.test.jsx`
-- `decision-memo/src/components/OptionCard.jsx` + `.test.jsx`
-- `decision-memo/src/components/Step3_Memo.jsx` + `.test.jsx`
+```
+apps/decision-memo/
+  index.html
+  vite.config.js          — Vite + Vitest config
+  tailwind.config.js
+  postcss.config.js
+  package.json
+  src/
+    main.jsx              — React root mount
+    index.css             — Tailwind directives
+    setupTests.js         — @testing-library/jest-dom import
+    App.jsx               — Step state machine + ApiKeyGate
+    styles/
+      print.css           — @media print: page margins, hide controls
+    utils/
+      validateJson.js     — JSON validation for both API responses
+    hooks/
+      useClaude.js        — Claude API wrapper hook
+    prompts/
+      extractStructure.js — Prompt builder for call #1
+      generateMemo.js     — Prompt builder for call #2
+    components/
+      ApiKeyGate.jsx      — API key entry, stores to localStorage
+      Step1_FreeText.jsx  — Free-text textarea + Analyse button
+      Step2_StructuredForm.jsx — Editable structured form
+      Step3_Memo.jsx      — Editable memo document
+      MemoSection.jsx     — Reusable section block (heading + children)
+      OptionCard.jsx      — Option: name, description, risk badge, bullets
+      ExportButton.jsx    — window.print() trigger
+    __tests__/
+      validateJson.test.js
+      prompts.test.js
+      useClaude.test.js
+```
 
 ---
 
-### Task 1: Project Scaffold
+## Task 1: Project Scaffold
 
 **Files:**
-- Create: `decision-memo/package.json`
-- Create: `decision-memo/vite.config.js`
-- Create: `decision-memo/tailwind.config.js`
-- Create: `decision-memo/postcss.config.js`
-- Create: `decision-memo/index.html`
-- Create: `decision-memo/src/main.jsx`
-- Create: `decision-memo/src/index.css`
-- Create: `decision-memo/src/test-setup.js`
-- Create: `decision-memo/src/App.jsx` (shell only)
-- Create: `decision-memo/src/styles/print.css` (empty)
+- Create: `apps/decision-memo/` (full scaffold)
 
-- [ ] **Step 1: Create decision-memo/package.json**
+- [ ] **Step 1: Scaffold the Vite + React project**
 
-```json
-{
-  "name": "decision-memo",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^15.0.7",
-    "@testing-library/user-event": "^14.5.2",
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.19",
-    "jsdom": "^24.1.0",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.4",
-    "vitest": "^1.6.0"
-  }
-}
-```
-
-- [ ] **Step 2: Install dependencies**
-
-Run from `decision-memo/`:
+Run from inside `apps/`:
 ```bash
+cd apps
+npm create vite@latest decision-memo -- --template react
+cd decision-memo
 npm install
 ```
-Expected: `node_modules/` created, no errors.
 
-- [ ] **Step 3: Create decision-memo/vite.config.js**
+Expected: `apps/decision-memo/` created with `src/`, `package.json`, `vite.config.js`, `index.html`.
 
-```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+- [ ] **Step 2: Install Tailwind CSS**
 
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.js'],
-    globals: true,
-  },
-})
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
 ```
 
-- [ ] **Step 4: Create decision-memo/tailwind.config.js**
-
+Replace the generated `tailwind.config.js` with:
 ```js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: { extend: {} },
   plugins: [],
-}
+};
 ```
 
-- [ ] **Step 5: Create decision-memo/postcss.config.js**
-
-```js
-export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-```
-
-- [ ] **Step 6: Create decision-memo/index.html**
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Decision Memo Generator</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
-```
-
-- [ ] **Step 7: Create decision-memo/src/main.jsx**
-
-```jsx
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
-import './styles/print.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
-```
-
-- [ ] **Step 8: Create decision-memo/src/index.css**
-
+Replace the contents of `src/index.css` with:
 ```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 ```
 
-- [ ] **Step 9: Create decision-memo/src/test-setup.js**
+- [ ] **Step 3: Install Vitest and Testing Library**
 
+```bash
+npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
+```
+
+- [ ] **Step 4: Install the Anthropic SDK**
+
+```bash
+npm install @anthropic-ai/sdk
+```
+
+- [ ] **Step 5: Configure Vitest in vite.config.js**
+
+Replace `vite.config.js` with:
 ```js
-import '@testing-library/jest-dom'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+    globals: true,
+  },
+});
 ```
 
-- [ ] **Step 10: Create shell decision-memo/src/App.jsx**
-
-```jsx
-import React from 'react'
-
-export default function App() {
-  return <div className="p-8 font-sans">Decision Memo Generator — scaffold</div>
-}
+Create `src/setupTests.js`:
+```js
+import '@testing-library/jest-dom';
 ```
 
-- [ ] **Step 11: Create empty decision-memo/src/styles/print.css**
+- [ ] **Step 6: Create the print stylesheet**
 
+Create `src/styles/print.css`:
 ```css
-/* Print rules added in Task 11 */
-```
-
-- [ ] **Step 12: Verify dev server starts**
-
-Run from `decision-memo/`:
-```bash
-npm run dev
-```
-Expected: Vite prints a local URL (e.g. `http://localhost:5173`). Opening it shows "Decision Memo Generator — scaffold".
-
-- [ ] **Step 13: Commit**
-
-```bash
-git add decision-memo/
-git commit -m "feat: scaffold decision-memo React/Vite/Tailwind app"
-```
-
----
-
-### Task 2: Validation Utilities
-
-**Files:**
-- Create: `decision-memo/src/utils/validateStructure.js`
-- Create: `decision-memo/src/utils/validateStructure.test.js`
-- Create: `decision-memo/src/utils/validateMemo.js`
-- Create: `decision-memo/src/utils/validateMemo.test.js`
-
-These validate the two Claude JSON responses. A response fails if any required string field is missing or under 10 characters. Arrays must be non-empty. `validateMemo` normalises invalid `risk` values to `"Medium"` silently rather than failing.
-
-- [ ] **Step 1: Write failing tests for validateStructure**
-
-```js
-// decision-memo/src/utils/validateStructure.test.js
-import { describe, it, expect } from 'vitest'
-import { validateStructure } from './validateStructure.js'
-
-const valid = {
-  title: 'Hire Designer vs. Contract',
-  context: 'We need design resources for Q3 launch.',
-  constraints: ['Budget under $50k'],
-  stakeholders: ['CEO', 'Head of Product'],
-  options: [
-    { name: 'Full-time hire', description: 'Hire a senior designer on payroll.' },
-    { name: 'Contract agency', description: 'Engage a design agency for the project.' },
-  ],
-}
-
-describe('validateStructure', () => {
-  it('returns true for a valid response', () => {
-    expect(validateStructure(valid)).toBe(true)
-  })
-
-  it('returns false when title is empty string', () => {
-    expect(validateStructure({ ...valid, title: '' })).toBe(false)
-  })
-
-  it('returns false when title is under 10 chars', () => {
-    expect(validateStructure({ ...valid, title: 'Short' })).toBe(false)
-  })
-
-  it('returns false when context is under 10 chars', () => {
-    expect(validateStructure({ ...valid, context: 'Too short' })).toBe(false)
-  })
-
-  it('returns false when options is empty array', () => {
-    expect(validateStructure({ ...valid, options: [] })).toBe(false)
-  })
-
-  it('returns false when an option name is under 10 chars', () => {
-    const bad = { ...valid, options: [{ name: 'Hi', description: 'A long enough description here.' }] }
-    expect(validateStructure(bad)).toBe(false)
-  })
-
-  it('returns false when an option description is under 10 chars', () => {
-    const bad = { ...valid, options: [{ name: 'Full-time hire', description: 'Short.' }] }
-    expect(validateStructure(bad)).toBe(false)
-  })
-
-  it('returns false for null input', () => {
-    expect(validateStructure(null)).toBe(false)
-  })
-
-  it('returns false when options is not an array', () => {
-    expect(validateStructure({ ...valid, options: 'not an array' })).toBe(false)
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-Run from `decision-memo/`:
-```bash
-npm test -- --reporter=verbose src/utils/validateStructure.test.js
-```
-Expected: All 9 tests FAIL with "Cannot find module" or similar.
-
-- [ ] **Step 3: Implement validateStructure**
-
-```js
-// decision-memo/src/utils/validateStructure.js
-const MIN_LEN = 10
-
-function isValidString(s) {
-  return typeof s === 'string' && s.trim().length >= MIN_LEN
-}
-
-export function validateStructure(json) {
-  if (!json || typeof json !== 'object') return false
-  if (!isValidString(json.title)) return false
-  if (!isValidString(json.context)) return false
-  if (!Array.isArray(json.options) || json.options.length === 0) return false
-  for (const opt of json.options) {
-    if (!isValidString(opt.name)) return false
-    if (!isValidString(opt.description)) return false
-  }
-  return true
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/utils/validateStructure.test.js
-```
-Expected: All 9 tests PASS.
-
-- [ ] **Step 5: Write failing tests for validateMemo**
-
-```js
-// decision-memo/src/utils/validateMemo.test.js
-import { describe, it, expect } from 'vitest'
-import { validateMemo } from './validateMemo.js'
-
-const valid = {
-  context: 'The company needs design resources ahead of the Q3 product launch.',
-  options: [
-    {
-      name: 'Full-time hire',
-      description: 'Bring a senior designer onto payroll for ongoing work.',
-      pros: ['Long-term investment', 'Deep product knowledge'],
-      cons: ['Higher upfront cost', 'Longer hiring timeline'],
-      risk: 'Low',
-    },
-    {
-      name: 'Contract agency',
-      description: 'Engage a design agency for the duration of the project.',
-      pros: ['Faster to start', 'Lower commitment'],
-      cons: ['Higher hourly rate', 'Less context over time'],
-      risk: 'Medium',
-    },
-  ],
-  recommendation: 'We recommend the full-time hire given the long-term design needs.',
-  nextSteps: ['Post the job description by May 15', 'Interview candidates in June'],
-}
-
-describe('validateMemo', () => {
-  it('returns true for a valid response', () => {
-    expect(validateMemo(valid)).toBe(true)
-  })
-
-  it('returns false when context is under 10 chars', () => {
-    expect(validateMemo({ ...valid, context: 'Short' })).toBe(false)
-  })
-
-  it('returns false when recommendation is under 10 chars', () => {
-    expect(validateMemo({ ...valid, recommendation: 'TBD' })).toBe(false)
-  })
-
-  it('returns false when options is empty', () => {
-    expect(validateMemo({ ...valid, options: [] })).toBe(false)
-  })
-
-  it('returns false when option name is under 10 chars', () => {
-    const bad = { ...valid, options: [{ ...valid.options[0], name: 'Hi' }] }
-    expect(validateMemo(bad)).toBe(false)
-  })
-
-  it('returns false when option has no pros', () => {
-    const bad = { ...valid, options: [{ ...valid.options[0], pros: [] }] }
-    expect(validateMemo(bad)).toBe(false)
-  })
-
-  it('returns false when option has no cons', () => {
-    const bad = { ...valid, options: [{ ...valid.options[0], cons: [] }] }
-    expect(validateMemo(bad)).toBe(false)
-  })
-
-  it('returns false when option description is under 10 chars', () => {
-    const bad = { ...valid, options: [{ ...valid.options[0], description: 'Short' }] }
-    expect(validateMemo(bad)).toBe(false)
-  })
-
-  it('normalises invalid risk to Medium and still returns true', () => {
-    const data = {
-      ...valid,
-      options: [{ ...valid.options[0], risk: 'Extreme' }],
-    }
-    expect(validateMemo(data)).toBe(true)
-    expect(data.options[0].risk).toBe('Medium')
-  })
-
-  it('returns false for null input', () => {
-    expect(validateMemo(null)).toBe(false)
-  })
-})
-```
-
-- [ ] **Step 6: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/utils/validateMemo.test.js
-```
-Expected: All 10 tests FAIL.
-
-- [ ] **Step 7: Implement validateMemo**
-
-```js
-// decision-memo/src/utils/validateMemo.js
-const MIN_LEN = 10
-const VALID_RISK = new Set(['Low', 'Medium', 'High'])
-
-function isValidString(s) {
-  return typeof s === 'string' && s.trim().length >= MIN_LEN
-}
-
-export function validateMemo(json) {
-  if (!json || typeof json !== 'object') return false
-  if (!isValidString(json.context)) return false
-  if (!isValidString(json.recommendation)) return false
-  if (!Array.isArray(json.options) || json.options.length === 0) return false
-  for (const opt of json.options) {
-    if (!isValidString(opt.name)) return false
-    if (!isValidString(opt.description)) return false
-    if (!Array.isArray(opt.pros) || opt.pros.length === 0) return false
-    if (!Array.isArray(opt.cons) || opt.cons.length === 0) return false
-    if (!VALID_RISK.has(opt.risk)) {
-      opt.risk = 'Medium'
-    }
-  }
-  return true
-}
-```
-
-- [ ] **Step 8: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/utils/validateMemo.test.js
-```
-Expected: All 10 tests PASS.
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add decision-memo/src/utils/
-git commit -m "feat: add JSON validation utilities for Claude responses"
-```
-
----
-
-### Task 3: Claude Prompts
-
-**Files:**
-- Create: `decision-memo/src/prompts/extractStructure.js`
-- Create: `decision-memo/src/prompts/generateMemo.js`
-
-No tests (pure string constants). The prompts enforce JSON-only output, field constraints, the `{` prefix nudge, and the `Low | Medium | High` risk enum.
-
-- [ ] **Step 1: Create extractStructure.js**
-
-```js
-// decision-memo/src/prompts/extractStructure.js
-export const EXTRACT_STRUCTURE_SYSTEM = `You are an expert at analyzing decision briefs and extracting structured information. You always respond with valid JSON only — no prose, no markdown, no code fences.`
-
-export function buildExtractStructurePrompt(freeText) {
-  return `Analyze the following decision description and extract a structured summary.
-
-Return a JSON object with exactly these fields:
-{
-  "title": "A clear, specific decision title (minimum 10 characters)",
-  "context": "A paragraph summarizing the situation and why a decision is needed (minimum 10 characters)",
-  "constraints": ["array of constraints or limiting factors — can be empty"],
-  "stakeholders": ["array of people or roles involved — can be empty"],
-  "options": [
-    {
-      "name": "Option name (minimum 10 characters)",
-      "description": "What this option involves (minimum 10 characters)"
-    }
-  ]
-}
-
-Rules:
-- Return 2 to 4 options minimum
-- If the input is vague, infer reasonable options from context
-- All string fields must be at least 10 characters
-- options must have at least 2 entries
-- No markdown, no prose, no explanation outside the JSON
-
-Begin your response with { and return only valid JSON.
-
-Decision description:
-${freeText}`
-}
-```
-
-- [ ] **Step 2: Create generateMemo.js**
-
-```js
-// decision-memo/src/prompts/generateMemo.js
-export const GENERATE_MEMO_SYSTEM = `You are an expert executive communications writer. You write clear, concise decision memos for senior leaders. You always respond with valid JSON only — no prose, no markdown, no code fences.`
-
-export function buildGenerateMemoPrompt(structuredData) {
-  return `Write a complete decision memo based on the following structured data.
-
-Input data:
-${JSON.stringify(structuredData, null, 2)}
-
-Return a JSON object with exactly these fields:
-{
-  "context": "A polished background paragraph explaining why this decision is needed (minimum 10 characters)",
-  "options": [
-    {
-      "name": "Option name (minimum 10 characters, match input names exactly)",
-      "description": "Polished 1-2 sentence description (minimum 10 characters)",
-      "pros": ["2 to 4 pros, each a complete sentence"],
-      "cons": ["2 to 4 cons, each a complete sentence"],
-      "risk": "Low OR Medium OR High — exactly one of these three values, nothing else"
-    }
-  ],
-  "recommendation": "One clear paragraph recommending an option with reasoning (minimum 10 characters)",
-  "nextSteps": ["2 to 4 concrete action items"]
-}
-
-Rules:
-- risk must be exactly "Low", "Medium", or "High" — nothing else
-- Each pros/cons array must have at least 2 entries
-- All string fields must be at least 10 characters
-- Match the number and names of options from the input data exactly
-- Write for a busy executive — clear, direct, no jargon
-- No markdown, no prose, no explanation outside the JSON
-
-Begin your response with { and return only valid JSON.`
-}
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add decision-memo/src/prompts/
-git commit -m "feat: add Claude prompt definitions for memo generation"
-```
-
----
-
-### Task 4: useClaude Hook
-
-**Files:**
-- Create: `decision-memo/src/hooks/useClaude.js`
-- Create: `decision-memo/src/hooks/useClaude.test.js`
-
-Wraps fetch calls to the Claude API. Exposes `{ loading, error, call }` where `call(systemPrompt, userPrompt)` returns parsed JSON or throws on network failure, non-2xx status, or malformed JSON.
-
-- [ ] **Step 1: Write failing tests**
-
-```js
-// decision-memo/src/hooks/useClaude.test.js
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
-import { useClaude } from './useClaude.js'
-
-beforeEach(() => {
-  localStorage.setItem('claudeApiKey', 'sk-ant-test-key-12345')
-  vi.restoreAllMocks()
-})
-
-describe('useClaude', () => {
-  it('starts with loading=false and error=null', () => {
-    const { result } = renderHook(() => useClaude())
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBe(null)
-  })
-
-  it('returns parsed JSON on success', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: async () => ({ content: [{ text: '{"result": "ok"}' }] }),
-      })
-    )
-    const { result } = renderHook(() => useClaude())
-    let data
-    await act(async () => {
-      data = await result.current.call('system', 'user')
-    })
-    expect(data).toEqual({ result: 'ok' })
-    expect(result.current.loading).toBe(false)
-    expect(result.current.error).toBe(null)
-  })
-
-  it('sets loading=true while call is in flight', async () => {
-    let resolveRequest
-    global.fetch = vi.fn(
-      () => new Promise(res => { resolveRequest = res })
-    )
-    const { result } = renderHook(() => useClaude())
-    act(() => { result.current.call('system', 'user') })
-    expect(result.current.loading).toBe(true)
-    resolveRequest({
-      ok: true,
-      json: async () => ({ content: [{ text: '{}' }] }),
-    })
-  })
-
-  it('sets error when fetch returns non-ok status', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: false, status: 401, json: async () => ({}) })
-    )
-    const { result } = renderHook(() => useClaude())
-    await act(async () => {
-      await result.current.call('system', 'user').catch(() => {})
-    })
-    expect(result.current.error).toMatch(/401/)
-    expect(result.current.loading).toBe(false)
-  })
-
-  it('sets error when Claude returns malformed JSON', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: async () => ({ content: [{ text: 'not json at all' }] }),
-      })
-    )
-    const { result } = renderHook(() => useClaude())
-    await act(async () => {
-      await result.current.call('system', 'user').catch(() => {})
-    })
-    expect(result.current.error).toBeTruthy()
-    expect(result.current.loading).toBe(false)
-  })
-
-  it('calls fetch with the correct Claude API URL and headers', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: async () => ({ content: [{ text: '{}' }] }),
-      })
-    )
-    const { result } = renderHook(() => useClaude())
-    await act(async () => { await result.current.call('sys', 'usr') })
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.anthropic.com/v1/messages',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'x-api-key': 'sk-ant-test-key-12345',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        }),
-      })
-    )
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/hooks/useClaude.test.js
-```
-Expected: All 6 tests FAIL.
-
-- [ ] **Step 3: Implement useClaude**
-
-```js
-// decision-memo/src/hooks/useClaude.js
-import { useState } from 'react'
-
-export function useClaude() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  async function call(systemPrompt, userPrompt) {
-    const apiKey = localStorage.getItem('claudeApiKey')
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 2048,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
-        }),
-      })
-      if (!res.ok) throw new Error(`API error ${res.status}`)
-      const data = await res.json()
-      const parsed = JSON.parse(data.content[0].text)
-      return parsed
-    } catch (err) {
-      setError(err.message)
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return { loading, error, call }
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/hooks/useClaude.test.js
-```
-Expected: All 6 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/hooks/
-git commit -m "feat: add useClaude hook with loading/error state"
-```
-
----
-
-### Task 5: ApiKeyGate Component
-
-**Files:**
-- Create: `decision-memo/src/components/ApiKeyGate.jsx`
-- Create: `decision-memo/src/components/ApiKeyGate.test.jsx`
-
-Renders children when a Claude API key exists in `localStorage`. Shows an entry form otherwise.
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/ApiKeyGate.test.jsx
-import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import ApiKeyGate from './ApiKeyGate.jsx'
-
-beforeEach(() => {
-  localStorage.clear()
-})
-
-describe('ApiKeyGate', () => {
-  it('shows the key entry form when no key in localStorage', () => {
-    render(<ApiKeyGate><div>App content</div></ApiKeyGate>)
-    expect(screen.getByPlaceholderText(/sk-ant/i)).toBeInTheDocument()
-    expect(screen.queryByText('App content')).not.toBeInTheDocument()
-  })
-
-  it('renders children when key exists in localStorage', () => {
-    localStorage.setItem('claudeApiKey', 'sk-ant-test-12345678')
-    render(<ApiKeyGate><div>App content</div></ApiKeyGate>)
-    expect(screen.getByText('App content')).toBeInTheDocument()
-    expect(screen.queryByPlaceholderText(/sk-ant/i)).not.toBeInTheDocument()
-  })
-
-  it('saves key to localStorage and shows children on submit', () => {
-    render(<ApiKeyGate><div>App content</div></ApiKeyGate>)
-    fireEvent.change(screen.getByPlaceholderText(/sk-ant/i), {
-      target: { value: 'sk-ant-my-real-key-abc' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    expect(localStorage.getItem('claudeApiKey')).toBe('sk-ant-my-real-key-abc')
-    expect(screen.getByText('App content')).toBeInTheDocument()
-  })
-
-  it('does not save an empty key', () => {
-    render(<ApiKeyGate><div>App content</div></ApiKeyGate>)
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    expect(localStorage.getItem('claudeApiKey')).toBeNull()
-    expect(screen.queryByText('App content')).not.toBeInTheDocument()
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/ApiKeyGate.test.jsx
-```
-Expected: All 4 tests FAIL.
-
-- [ ] **Step 3: Implement ApiKeyGate**
-
-```jsx
-// decision-memo/src/components/ApiKeyGate.jsx
-import React, { useState } from 'react'
-
-export default function ApiKeyGate({ children }) {
-  const [saved, setSaved] = useState(!!localStorage.getItem('claudeApiKey'))
-  const [input, setInput] = useState('')
-
-  function handleSave() {
-    if (!input.trim()) return
-    localStorage.setItem('claudeApiKey', input.trim())
-    setSaved(true)
-  }
-
-  if (saved) return children
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-lg shadow p-8 w-full max-w-md">
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">Decision Memo Generator</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          Enter your Claude API key to get started. It is stored only in your browser.
-        </p>
-        <input
-          type="password"
-          placeholder="sk-ant-..."
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleSave}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2 text-sm font-medium"
-        >
-          Save API Key
-        </button>
-      </div>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/ApiKeyGate.test.jsx
-```
-Expected: All 4 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/ApiKeyGate.jsx decision-memo/src/components/ApiKeyGate.test.jsx
-git commit -m "feat: add ApiKeyGate with localStorage persistence"
-```
-
----
-
-### Task 6: Step1_FreeText Component
-
-**Files:**
-- Create: `decision-memo/src/components/Step1_FreeText.jsx`
-- Create: `decision-memo/src/components/Step1_FreeText.test.jsx`
-
-Free text input. Calls `onAnalyse(text)` on submit. Shows loading/error states.
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/Step1_FreeText.test.jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import Step1_FreeText from './Step1_FreeText.jsx'
-
-describe('Step1_FreeText', () => {
-  it('renders the textarea and Analyse button', () => {
-    render(<Step1_FreeText onAnalyse={vi.fn()} loading={false} error={null} />)
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /analyse/i })).toBeInTheDocument()
-  })
-
-  it('calls onAnalyse with the textarea value on submit', () => {
-    const onAnalyse = vi.fn()
-    render(<Step1_FreeText onAnalyse={onAnalyse} loading={false} error={null} />)
-    fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'We need to decide which vendor to use for cloud hosting.' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /analyse/i }))
-    expect(onAnalyse).toHaveBeenCalledWith(
-      'We need to decide which vendor to use for cloud hosting.'
-    )
-  })
-
-  it('does not call onAnalyse when textarea is empty', () => {
-    const onAnalyse = vi.fn()
-    render(<Step1_FreeText onAnalyse={onAnalyse} loading={false} error={null} />)
-    fireEvent.click(screen.getByRole('button', { name: /analyse/i }))
-    expect(onAnalyse).not.toHaveBeenCalled()
-  })
-
-  it('disables button and shows loading text when loading=true', () => {
-    render(<Step1_FreeText onAnalyse={vi.fn()} loading={true} error={null} />)
-    expect(screen.getByRole('button')).toBeDisabled()
-    expect(screen.getByRole('button')).toHaveTextContent(/analysing/i)
-  })
-
-  it('shows error message when error is set', () => {
-    render(<Step1_FreeText onAnalyse={vi.fn()} loading={false} error="API error 401" />)
-    expect(screen.getByText(/api error 401/i)).toBeInTheDocument()
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/Step1_FreeText.test.jsx
-```
-Expected: All 5 tests FAIL.
-
-- [ ] **Step 3: Implement Step1_FreeText**
-
-```jsx
-// decision-memo/src/components/Step1_FreeText.jsx
-import React, { useState } from 'react'
-
-export default function Step1_FreeText({ onAnalyse, loading, error }) {
-  const [text, setText] = useState('')
-
-  function handleSubmit() {
-    if (!text.trim()) return
-    onAnalyse(text.trim())
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto py-16 px-6">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Decision Memo Generator</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Describe a decision your exec needs to make. Be as specific or as rough as you like.
-      </p>
-      <textarea
-        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        rows={8}
-        placeholder="e.g. We need to decide whether to hire a full-time designer or contract out. Budget is tight and the Q3 launch is critical..."
-        value={text}
-        onChange={e => setText(e.target.value)}
-      />
-      {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg px-6 py-2.5 text-sm font-medium"
-      >
-        {loading ? 'Analysing…' : 'Analyse'}
-      </button>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/Step1_FreeText.test.jsx
-```
-Expected: All 5 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/Step1_FreeText.jsx decision-memo/src/components/Step1_FreeText.test.jsx
-git commit -m "feat: add Step1_FreeText component"
-```
-
----
-
-### Task 7: Step2_StructuredForm Component
-
-**Files:**
-- Create: `decision-memo/src/components/Step2_StructuredForm.jsx`
-- Create: `decision-memo/src/components/Step2_StructuredForm.test.jsx`
-
-Displays the AI-extracted structure as an editable form. Calls `onGenerate(formData)` with current form state on submit. Shows inline error with "Try again" button on failure.
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/Step2_StructuredForm.test.jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import Step2_StructuredForm from './Step2_StructuredForm.jsx'
-
-const sampleData = {
-  title: 'Hire Designer vs. Contract Agency',
-  context: 'We need design resources ahead of Q3 launch.',
-  constraints: ['Budget under $50k'],
-  stakeholders: ['CEO', 'Head of Product'],
-  options: [
-    { name: 'Full-time hire', description: 'Bring a senior designer onto payroll.' },
-    { name: 'Contract agency', description: 'Engage a design agency for the project.' },
-  ],
-}
-
-describe('Step2_StructuredForm', () => {
-  it('pre-fills title field with data.title', () => {
-    render(<Step2_StructuredForm data={sampleData} onGenerate={vi.fn()} loading={false} error={null} />)
-    expect(screen.getByDisplayValue('Hire Designer vs. Contract Agency')).toBeInTheDocument()
-  })
-
-  it('pre-fills context field with data.context', () => {
-    render(<Step2_StructuredForm data={sampleData} onGenerate={vi.fn()} loading={false} error={null} />)
-    expect(screen.getByDisplayValue('We need design resources ahead of Q3 launch.')).toBeInTheDocument()
-  })
-
-  it('renders both option names', () => {
-    render(<Step2_StructuredForm data={sampleData} onGenerate={vi.fn()} loading={false} error={null} />)
-    expect(screen.getByDisplayValue('Full-time hire')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('Contract agency')).toBeInTheDocument()
-  })
-
-  it('calls onGenerate with updated data when form is submitted', () => {
-    const onGenerate = vi.fn()
-    render(<Step2_StructuredForm data={sampleData} onGenerate={onGenerate} loading={false} error={null} />)
-    fireEvent.change(screen.getByDisplayValue('Hire Designer vs. Contract Agency'), {
-      target: { value: 'Updated Title for the Decision' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /generate memo/i }))
-    expect(onGenerate).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Updated Title for the Decision' })
-    )
-  })
-
-  it('disables button and shows loading text when loading=true', () => {
-    render(<Step2_StructuredForm data={sampleData} onGenerate={vi.fn()} loading={true} error={null} />)
-    expect(screen.getByRole('button')).toBeDisabled()
-    expect(screen.getByRole('button')).toHaveTextContent(/generating/i)
-  })
-
-  it('shows error with Try again button when error is set', () => {
-    render(<Step2_StructuredForm data={sampleData} onGenerate={vi.fn()} loading={false} error="Parse failed" />)
-    expect(screen.getByText(/try again/i)).toBeInTheDocument()
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/Step2_StructuredForm.test.jsx
-```
-Expected: All 6 tests FAIL.
-
-- [ ] **Step 3: Implement Step2_StructuredForm**
-
-```jsx
-// decision-memo/src/components/Step2_StructuredForm.jsx
-import React, { useState } from 'react'
-
-export default function Step2_StructuredForm({ data, onGenerate, loading, error }) {
-  const [form, setForm] = useState(() => ({
-    ...data,
-    options: data.options.map(o => ({ ...o })),
-    constraints: [...(data.constraints || [])],
-    stakeholders: [...(data.stakeholders || [])],
-  }))
-
-  function updateField(field, value) {
-    setForm(f => ({ ...f, [field]: value }))
-  }
-
-  function updateOption(index, field, value) {
-    setForm(f => ({
-      ...f,
-      options: f.options.map((o, i) => i === index ? { ...o, [field]: value } : o),
-    }))
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto py-12 px-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-1">Review the details</h2>
-      <p className="text-sm text-gray-500 mb-6">Edit anything the AI got wrong before generating the memo.</p>
-
-      <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Decision Title</label>
-      <input
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        value={form.title}
-        onChange={e => updateField('title', e.target.value)}
-      />
-
-      <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Context</label>
-      <textarea
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-        rows={3}
-        value={form.context}
-        onChange={e => updateField('context', e.target.value)}
-      />
-
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">Options</h3>
-      {form.options.map((opt, i) => (
-        <div key={i} className="border border-gray-200 rounded-lg p-4 mb-3">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
-          <input
-            className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={opt.name}
-            onChange={e => updateOption(i, 'name', e.target.value)}
-          />
-          <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-          <input
-            className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={opt.description}
-            onChange={e => updateOption(i, 'description', e.target.value)}
-          />
-        </div>
-      ))}
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded px-4 py-3 mb-4 text-sm text-red-700">
-          Something went wrong.{' '}
-          <button className="underline font-medium" onClick={() => onGenerate(form)}>
-            Try again
-          </button>
-        </div>
-      )}
-
-      <button
-        onClick={() => onGenerate(form)}
-        disabled={loading}
-        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg px-6 py-2.5 text-sm font-medium"
-      >
-        {loading ? 'Generating…' : 'Generate Memo'}
-      </button>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/Step2_StructuredForm.test.jsx
-```
-Expected: All 6 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/Step2_StructuredForm.jsx decision-memo/src/components/Step2_StructuredForm.test.jsx
-git commit -m "feat: add Step2_StructuredForm component"
-```
-
----
-
-### Task 8: RiskBadge Component
-
-**Files:**
-- Create: `decision-memo/src/components/RiskBadge.jsx`
-- Create: `decision-memo/src/components/RiskBadge.test.jsx`
-
-Clickable badge. Cycles `Low` (green) → `Medium` (yellow) → `High` (red) → `Low` on click. Calls `onChange(newValue)`.
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/RiskBadge.test.jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import RiskBadge from './RiskBadge.jsx'
-
-describe('RiskBadge', () => {
-  it('renders "Low" with green styling', () => {
-    render(<RiskBadge value="Low" onChange={vi.fn()} />)
-    const badge = screen.getByText('Low')
-    expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/green/)
-  })
-
-  it('renders "Medium" with yellow styling', () => {
-    render(<RiskBadge value="Medium" onChange={vi.fn()} />)
-    expect(screen.getByText('Medium').className).toMatch(/yellow/)
-  })
-
-  it('renders "High" with red styling', () => {
-    render(<RiskBadge value="High" onChange={vi.fn()} />)
-    expect(screen.getByText('High').className).toMatch(/red/)
-  })
-
-  it('cycles Low → Medium on click', () => {
-    const onChange = vi.fn()
-    render(<RiskBadge value="Low" onChange={onChange} />)
-    fireEvent.click(screen.getByText('Low'))
-    expect(onChange).toHaveBeenCalledWith('Medium')
-  })
-
-  it('cycles Medium → High on click', () => {
-    const onChange = vi.fn()
-    render(<RiskBadge value="Medium" onChange={onChange} />)
-    fireEvent.click(screen.getByText('Medium'))
-    expect(onChange).toHaveBeenCalledWith('High')
-  })
-
-  it('cycles High → Low on click', () => {
-    const onChange = vi.fn()
-    render(<RiskBadge value="High" onChange={onChange} />)
-    fireEvent.click(screen.getByText('High'))
-    expect(onChange).toHaveBeenCalledWith('Low')
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/RiskBadge.test.jsx
-```
-Expected: All 6 tests FAIL.
-
-- [ ] **Step 3: Implement RiskBadge**
-
-```jsx
-// decision-memo/src/components/RiskBadge.jsx
-import React from 'react'
-
-const CYCLE = ['Low', 'Medium', 'High']
-
-const STYLES = {
-  Low: 'bg-green-100 text-green-800 border-green-200',
-  Medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  High: 'bg-red-100 text-red-800 border-red-200',
-}
-
-export default function RiskBadge({ value, onChange }) {
-  function handleClick() {
-    const next = CYCLE[(CYCLE.indexOf(value) + 1) % CYCLE.length]
-    onChange(next)
-  }
-
-  return (
-    <span
-      onClick={handleClick}
-      className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-medium cursor-pointer select-none ${STYLES[value] ?? STYLES.Medium}`}
-      title="Click to change risk level"
-    >
-      {value}
-    </span>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/RiskBadge.test.jsx
-```
-Expected: All 6 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/RiskBadge.jsx decision-memo/src/components/RiskBadge.test.jsx
-git commit -m "feat: add RiskBadge with cycling Low/Medium/High"
-```
-
----
-
-### Task 9: OptionCard Component
-
-**Files:**
-- Create: `decision-memo/src/components/OptionCard.jsx`
-- Create: `decision-memo/src/components/OptionCard.test.jsx`
-
-One option block in the memo document. Name and description are `contenteditable`. Pros/cons each have per-bullet `×` (delete) and a `+` (add) button. Risk badge cycles on click. All changes call `onChange(updatedOption)`.
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/OptionCard.test.jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import OptionCard from './OptionCard.jsx'
-
-const sampleOption = {
-  name: 'Full-time hire',
-  description: 'Bring a senior designer onto payroll for ongoing work.',
-  pros: ['Long-term investment in the team', 'Deep product knowledge over time'],
-  cons: ['Higher upfront cost and commitment', 'Longer hiring timeline required'],
-  risk: 'Low',
-}
-
-describe('OptionCard', () => {
-  it('renders option name', () => {
-    render(<OptionCard option={sampleOption} onChange={vi.fn()} />)
-    expect(screen.getByText('Full-time hire')).toBeInTheDocument()
-  })
-
-  it('renders all pros', () => {
-    render(<OptionCard option={sampleOption} onChange={vi.fn()} />)
-    expect(screen.getByText('Long-term investment in the team')).toBeInTheDocument()
-    expect(screen.getByText('Deep product knowledge over time')).toBeInTheDocument()
-  })
-
-  it('renders all cons', () => {
-    render(<OptionCard option={sampleOption} onChange={vi.fn()} />)
-    expect(screen.getByText('Higher upfront cost and commitment')).toBeInTheDocument()
-  })
-
-  it('renders risk badge', () => {
-    render(<OptionCard option={sampleOption} onChange={vi.fn()} />)
-    expect(screen.getByText('Low')).toBeInTheDocument()
-  })
-
-  it('calls onChange with cycled risk when badge is clicked', () => {
-    const onChange = vi.fn()
-    render(<OptionCard option={sampleOption} onChange={onChange} />)
-    fireEvent.click(screen.getByText('Low'))
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ risk: 'Medium' }))
-  })
-
-  it('calls onChange with one fewer pro when a pro × button is clicked', () => {
-    const onChange = vi.fn()
-    render(<OptionCard option={sampleOption} onChange={onChange} />)
-    const deleteButtons = screen.getAllByTitle('Remove')
-    fireEvent.click(deleteButtons[0])
-    expect(onChange.mock.calls[0][0].pros).toHaveLength(1)
-  })
-
-  it('calls onChange with one more pro when + Add is clicked in pros section', () => {
-    const onChange = vi.fn()
-    render(<OptionCard option={sampleOption} onChange={onChange} />)
-    const addButtons = screen.getAllByTitle('Add')
-    fireEvent.click(addButtons[0])
-    expect(onChange.mock.calls[0][0].pros).toHaveLength(3)
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/OptionCard.test.jsx
-```
-Expected: All 7 tests FAIL.
-
-- [ ] **Step 3: Implement OptionCard**
-
-```jsx
-// decision-memo/src/components/OptionCard.jsx
-import React from 'react'
-import RiskBadge from './RiskBadge.jsx'
-
-function BulletList({ items, onUpdate, onAdd, onRemove }) {
-  return (
-    <ul className="space-y-1">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-1 group">
-          <span className="text-gray-400 mt-0.5 shrink-0">·</span>
-          <span
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={e => onUpdate(i, e.currentTarget.textContent)}
-            className="flex-1 outline-none focus:bg-blue-50 rounded px-0.5 text-sm"
-          >
-            {item}
-          </span>
-          <button
-            title="Remove"
-            onClick={() => onRemove(i)}
-            className="text-gray-300 hover:text-red-400 print:hidden text-xs opacity-0 group-hover:opacity-100 shrink-0"
-          >
-            ×
-          </button>
-        </li>
-      ))}
-      <li>
-        <button
-          title="Add"
-          onClick={onAdd}
-          className="text-blue-400 hover:text-blue-600 text-xs print:hidden"
-        >
-          + Add
-        </button>
-      </li>
-    </ul>
-  )
-}
-
-export default function OptionCard({ option, onChange }) {
-  function update(field, value) {
-    onChange({ ...option, [field]: value })
-  }
-
-  function updateBullet(list, index, value) {
-    onChange({ ...option, [list]: option[list].map((item, i) => i === index ? value : item) })
-  }
-
-  function addBullet(list) {
-    onChange({ ...option, [list]: [...option[list], 'New item'] })
-  }
-
-  function removeBullet(list, index) {
-    onChange({ ...option, [list]: option[list].filter((_, i) => i !== index) })
-  }
-
-  return (
-    <div className="border border-gray-200 rounded-lg p-5 mb-4 bg-white">
-      <div className="flex items-start justify-between mb-3">
-        <span
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={e => update('name', e.currentTarget.textContent)}
-          className="font-semibold text-gray-900 outline-none focus:bg-blue-50 rounded px-0.5"
-        >
-          {option.name}
-        </span>
-        <RiskBadge value={option.risk} onChange={risk => update('risk', risk)} />
-      </div>
-      <p
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={e => update('description', e.currentTarget.textContent)}
-        className="text-sm text-gray-600 mb-4 outline-none focus:bg-blue-50 rounded px-0.5"
-      >
-        {option.description}
-      </p>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">Pros</p>
-          <BulletList
-            items={option.pros}
-            onUpdate={(i, v) => updateBullet('pros', i, v)}
-            onAdd={() => addBullet('pros')}
-            onRemove={i => removeBullet('pros', i)}
-          />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">Cons</p>
-          <BulletList
-            items={option.cons}
-            onUpdate={(i, v) => updateBullet('cons', i, v)}
-            onAdd={() => addBullet('cons')}
-            onRemove={i => removeBullet('cons', i)}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/OptionCard.test.jsx
-```
-Expected: All 7 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/OptionCard.jsx decision-memo/src/components/OptionCard.test.jsx
-git commit -m "feat: add OptionCard with contenteditable fields and bullet add/remove"
-```
-
----
-
-### Task 10: Step3_Memo Component
-
-**Files:**
-- Create: `decision-memo/src/components/Step3_Memo.jsx`
-- Create: `decision-memo/src/components/Step3_Memo.test.jsx`
-
-The full document view. All text is `contenteditable`. "Prepared for" and "Prepared by" default to italic muted placeholder text that clears on first click and restores if left empty on blur. Recommendation section shows "AI Draft — edit before sharing" label (hidden in print). Export PDF button calls `window.print()` (hidden in print).
-
-- [ ] **Step 1: Write failing tests**
-
-```jsx
-// decision-memo/src/components/Step3_Memo.test.jsx
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import Step3_Memo from './Step3_Memo.jsx'
-
-const sampleMemo = {
-  context: 'The company needs design resources ahead of the Q3 product launch.',
-  options: [
-    {
-      name: 'Full-time hire',
-      description: 'Bring a senior designer onto payroll for ongoing work.',
-      pros: ['Long-term investment in the team', 'Deep product knowledge over time'],
-      cons: ['Higher upfront cost and commitment', 'Longer hiring timeline required'],
-      risk: 'Low',
-    },
-  ],
-  recommendation: 'We recommend hiring full-time given the long-term design needs of the product.',
-  nextSteps: ['Post job description by May 15', 'Interview shortlisted candidates in June'],
-}
-
-describe('Step3_Memo', () => {
-  it('renders the DECISION MEMO header', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText(/decision memo/i)).toBeInTheDocument()
-  })
-
-  it('renders the decision title', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText('Hire Designer vs. Contract')).toBeInTheDocument()
-  })
-
-  it('renders placeholder for "Prepared for" field', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText('[ Executive Name ]')).toBeInTheDocument()
-  })
-
-  it('renders placeholder for "Prepared by" field', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText('[ Your Name ]')).toBeInTheDocument()
-  })
-
-  it('renders the BACKGROUND section with context text', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText(/Q3 product launch/)).toBeInTheDocument()
-  })
-
-  it('renders the recommendation text', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText(/long-term design needs/)).toBeInTheDocument()
-  })
-
-  it('renders the AI Draft warning label', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText(/ai draft/i)).toBeInTheDocument()
-  })
-
-  it('renders the Export PDF button', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByRole('button', { name: /export pdf/i })).toBeInTheDocument()
-  })
-
-  it('calls window.print on Export PDF click', () => {
-    const print = vi.fn()
-    vi.stubGlobal('print', print)
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    fireEvent.click(screen.getByRole('button', { name: /export pdf/i }))
-    expect(print).toHaveBeenCalled()
-  })
-
-  it('renders next steps', () => {
-    render(<Step3_Memo memo={sampleMemo} title="Hire Designer vs. Contract" />)
-    expect(screen.getByText('Post job description by May 15')).toBeInTheDocument()
-  })
-})
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-```bash
-npm test -- --reporter=verbose src/components/Step3_Memo.test.jsx
-```
-Expected: All 10 tests FAIL.
-
-- [ ] **Step 3: Implement Step3_Memo**
-
-```jsx
-// decision-memo/src/components/Step3_Memo.jsx
-import React, { useState } from 'react'
-import OptionCard from './OptionCard.jsx'
-
-function Placeholder({ defaultText, className = '' }) {
-  const [active, setActive] = useState(false)
-  const [value, setValue] = useState('')
-
-  if (active || value) {
-    return (
-      <span
-        contentEditable
-        suppressContentEditableWarning
-        autoFocus={active && !value}
-        onBlur={e => {
-          const text = e.currentTarget.textContent.trim()
-          setValue(text)
-          if (!text) setActive(false)
-        }}
-        className={`outline-none focus:bg-blue-50 rounded px-0.5 ${className}`}
-      >
-        {value || defaultText}
-      </span>
-    )
-  }
-
-  return (
-    <span
-      onClick={() => setActive(true)}
-      className={`italic text-gray-400 cursor-text rounded px-0.5 hover:bg-blue-50 ${className}`}
-    >
-      {defaultText}
-    </span>
-  )
-}
-
-function EditableBulletList({ items, onUpdate, onAdd, onRemove }) {
-  return (
-    <ul className="space-y-1 ml-4">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-1 group">
-          <span className="text-gray-400 mt-0.5 shrink-0">·</span>
-          <span
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={e => onUpdate(i, e.currentTarget.textContent)}
-            className="flex-1 outline-none focus:bg-blue-50 rounded px-0.5 text-sm"
-          >
-            {item}
-          </span>
-          <button
-            onClick={() => onRemove(i)}
-            className="text-gray-300 hover:text-red-400 print:hidden text-xs opacity-0 group-hover:opacity-100"
-          >
-            ×
-          </button>
-        </li>
-      ))}
-      <li>
-        <button
-          onClick={onAdd}
-          className="text-blue-400 hover:text-blue-600 text-xs print:hidden"
-        >
-          + Add
-        </button>
-      </li>
-    </ul>
-  )
-}
-
-export default function Step3_Memo({ memo, title }) {
-  const [options, setOptions] = useState(memo.options)
-  const [nextSteps, setNextSteps] = useState(memo.nextSteps)
-
-  const today = new Date().toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
-
-  function updateOption(index, updated) {
-    setOptions(opts => opts.map((o, i) => i === index ? updated : o))
-  }
-
-  function updateNextStep(index, value) {
-    setNextSteps(steps => steps.map((s, i) => i === index ? value : s))
-  }
-
-  function addNextStep() {
-    setNextSteps(steps => [...steps, 'New action item'])
-  }
-
-  function removeNextStep(index) {
-    setNextSteps(steps => steps.filter((_, i) => i !== index))
-  }
-
-  return (
-    <div className="max-w-3xl mx-auto py-12 px-6">
-      <div className="flex justify-end mb-6 print:hidden">
-        <button
-          onClick={() => window.print()}
-          className="bg-gray-900 hover:bg-gray-700 text-white rounded-lg px-5 py-2 text-sm font-medium"
-        >
-          Export PDF
-        </button>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-10 font-serif">
-        <div className="flex items-start justify-between mb-1">
-          <p className="text-xs font-mono font-bold tracking-widest text-gray-500 uppercase">Decision Memo</p>
-          <p className="text-xs text-gray-400">{today}</p>
-        </div>
-        <hr className="border-gray-300 mb-4" />
-
-        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm mb-6">
-          <span className="text-gray-500 font-medium">Decision:</span>
-          <span
-            contentEditable
-            suppressContentEditableWarning
-            className="font-semibold text-gray-900 outline-none focus:bg-blue-50 rounded px-0.5"
-          >
-            {title}
-          </span>
-
-          <span className="text-gray-500 font-medium">Prepared for:</span>
-          <Placeholder defaultText="[ Executive Name ]" className="text-gray-900" />
-
-          <span className="text-gray-500 font-medium">Prepared by:</span>
-          <Placeholder defaultText="[ Your Name ]" className="text-gray-900" />
-        </div>
-
-        <h2 className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">Background</h2>
-        <p
-          contentEditable
-          suppressContentEditableWarning
-          className="text-sm text-gray-700 leading-relaxed mb-6 outline-none focus:bg-blue-50 rounded px-0.5"
-        >
-          {memo.context}
-        </p>
-
-        <h2 className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-3">Options</h2>
-        <div className="mb-6">
-          {options.map((opt, i) => (
-            <OptionCard key={i} option={opt} onChange={updated => updateOption(i, updated)} />
-          ))}
-        </div>
-
-        <h2 className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-1">Recommendation</h2>
-        <p className="text-xs text-amber-600 font-medium mb-2 print:hidden">
-          ⚠ AI Draft — edit before sharing
-        </p>
-        <p
-          contentEditable
-          suppressContentEditableWarning
-          className="text-sm text-gray-700 leading-relaxed mb-6 outline-none focus:bg-blue-50 rounded px-0.5"
-        >
-          {memo.recommendation}
-        </p>
-
-        <h2 className="text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">Next Steps</h2>
-        <EditableBulletList
-          items={nextSteps}
-          onUpdate={updateNextStep}
-          onAdd={addNextStep}
-          onRemove={removeNextStep}
-        />
-      </div>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 4: Run tests to verify they pass**
-
-```bash
-npm test -- --reporter=verbose src/components/Step3_Memo.test.jsx
-```
-Expected: All 10 tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add decision-memo/src/components/Step3_Memo.jsx decision-memo/src/components/Step3_Memo.test.jsx
-git commit -m "feat: add Step3_Memo document view with contenteditable fields and PDF export"
-```
-
----
-
-### Task 11: App.jsx Wire-Up and print.css
-
-**Files:**
-- Modify: `decision-memo/src/App.jsx`
-- Modify: `decision-memo/src/styles/print.css`
-
-Wire all steps together. App manages `step` (1 | 2 | 3), `structuredData`, and `memoData` state. Print CSS hides controls and sets page margins.
-
-- [ ] **Step 1: Write full App.jsx**
-
-```jsx
-// decision-memo/src/App.jsx
-import React, { useState } from 'react'
-import ApiKeyGate from './components/ApiKeyGate.jsx'
-import Step1_FreeText from './components/Step1_FreeText.jsx'
-import Step2_StructuredForm from './components/Step2_StructuredForm.jsx'
-import Step3_Memo from './components/Step3_Memo.jsx'
-import { useClaude } from './hooks/useClaude.js'
-import { EXTRACT_STRUCTURE_SYSTEM, buildExtractStructurePrompt } from './prompts/extractStructure.js'
-import { GENERATE_MEMO_SYSTEM, buildGenerateMemoPrompt } from './prompts/generateMemo.js'
-import { validateStructure } from './utils/validateStructure.js'
-import { validateMemo } from './utils/validateMemo.js'
-
-export default function App() {
-  const [step, setStep] = useState(1)
-  const [structuredData, setStructuredData] = useState(null)
-  const [memoData, setMemoData] = useState(null)
-  const { loading, error, call } = useClaude()
-
-  async function handleAnalyse(freeText) {
-    try {
-      const result = await call(
-        EXTRACT_STRUCTURE_SYSTEM,
-        buildExtractStructurePrompt(freeText)
-      )
-      if (!validateStructure(result)) {
-        throw new Error('Response validation failed — required fields missing or too short.')
-      }
-      setStructuredData(result)
-      setStep(2)
-    } catch {
-      // error state set by useClaude; stay on step 1
-    }
-  }
-
-  async function handleGenerate(formData) {
-    try {
-      const result = await call(
-        GENERATE_MEMO_SYSTEM,
-        buildGenerateMemoPrompt(formData)
-      )
-      if (!validateMemo(result)) {
-        throw new Error('Response validation failed — required fields missing or too short.')
-      }
-      setMemoData(result)
-      setStep(3)
-    } catch {
-      // error state set by useClaude; stay on step 2
-    }
-  }
-
-  return (
-    <ApiKeyGate>
-      <div className="min-h-screen bg-gray-50">
-        {step === 1 && (
-          <Step1_FreeText onAnalyse={handleAnalyse} loading={loading} error={error} />
-        )}
-        {step === 2 && structuredData && (
-          <Step2_StructuredForm
-            data={structuredData}
-            onGenerate={handleGenerate}
-            loading={loading}
-            error={error}
-          />
-        )}
-        {step === 3 && memoData && (
-          <Step3_Memo memo={memoData} title={structuredData.title} />
-        )}
-      </div>
-    </ApiKeyGate>
-  )
-}
-```
-
-- [ ] **Step 2: Write print.css**
-
-```css
-/* decision-memo/src/styles/print.css */
 @media print {
-  body {
-    background: white;
-  }
-
-  .print\:hidden {
-    display: none !important;
-  }
-
-  [contenteditable] {
-    outline: none !important;
-    background: transparent !important;
-  }
-
-  .border.border-gray-200.rounded-lg {
-    break-inside: avoid;
-  }
-
   @page {
-    margin: 1.5cm 2cm;
+    margin: 1in;
+  }
+
+  body {
+    background: white !important;
   }
 }
 ```
 
-- [ ] **Step 3: Run the full test suite**
+- [ ] **Step 7: Update main.jsx**
+
+Replace `src/main.jsx` with:
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+import './styles/print.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+- [ ] **Step 8: Run the test suite to confirm zero-test baseline**
 
 ```bash
 npm test
 ```
-Expected: All tests across all files PASS.
 
-- [ ] **Step 4: Start dev server and smoke test manually**
+Expected output: `No test files found` or `0 tests passed`. No errors.
+
+- [ ] **Step 9: Confirm the dev server starts**
 
 ```bash
 npm run dev
 ```
 
-Open the printed local URL and verify:
-1. API key gate appears on first load, accepts a key (any non-empty string for dev), stores it, reveals Step 1
-2. Type a decision description (e.g. "We need to decide whether to renew our office lease or go fully remote. Lease expires in 3 months."), click Analyse — loading state shows, then Step 2 loads with pre-filled form
-3. Edit a field in Step 2, click Generate Memo — Step 3 loads with the memo document
-4. In Step 3: click on the decision title text to edit it inline; click a pro bullet text to edit it; click × next to a bullet to delete it; click `+ Add` to add a new bullet; click the risk badge to cycle it
-5. "Prepared for" shows `[ Executive Name ]` in italic — click it, it becomes editable; clear it and blur, the placeholder restores
-6. Click Export PDF — browser print dialog opens; confirm that controls (Export PDF button, × and + buttons, AI Draft label) do not appear in the print preview
+Expected: Vite dev server starts on `http://localhost:5173`. Stop it with Ctrl+C.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add decision-memo/src/App.jsx decision-memo/src/styles/print.css
-git commit -m "feat: wire up full Decision Memo Generator app"
+git add apps/decision-memo
+git commit -m "feat: scaffold decision-memo Vite + React + Tailwind + Vitest"
 ```
 
 ---
 
-## Self-Review
+## Task 2: JSON Validation Utility (TDD)
 
-**Spec coverage:**
-- ✅ Web app (React + Vite + Tailwind)
-- ✅ Free text → AI extract → structured form (Step 1 → Step 2)
-- ✅ User reviews/edits structured form before generating (Step2_StructuredForm)
-- ✅ Memo renders as styled document (Step3_Memo)
-- ✅ All Step 3 fields are `contenteditable` — no `<input>` or `<textarea>` elements
-- ✅ "Prepared for" / "Prepared by" default to `[ Executive Name ]` / `[ Your Name ]` in italic muted style; restore on empty blur
-- ✅ Pros/cons bullets: per-bullet `×` delete and `+` add button (print:hidden)
-- ✅ Risk badge: `Low` / `Medium` / `High` fixed enum, color-coded green/yellow/red, cycles on click
-- ✅ Recommendation labeled "⚠ AI Draft — edit before sharing" (screen only, print:hidden)
-- ✅ PDF export via `window.print()` — Export PDF button is print:hidden
-- ✅ Claude API key stored in localStorage, prompted via ApiKeyGate on first use
-- ✅ Validation: required string fields empty or <10 chars → parse failure → "Try again" error; Step 2 form data preserved
-- ✅ Prompt prefix nudge: "Begin your response with {"
-- ✅ Invalid risk value → normalised to `"Medium"` silently (validateMemo)
-- ✅ Two Claude API calls: extractStructure (Step 1→2) and generateMemo (Step 2→3)
-- ✅ User's Step 2 form data preserved on generate error (error shown inline with Try again)
+**Files:**
+- Create: `apps/decision-memo/src/utils/validateJson.js`
+- Create: `apps/decision-memo/src/__tests__/validateJson.test.js`
 
-**Placeholder scan:** No TBDs, TODOs, "similar to above" references, or incomplete steps found.
+- [ ] **Step 1: Write the failing tests**
 
-**Type consistency:**
-- `validateStructure` / `validateMemo` — defined in `utils/`, imported identically in `App.jsx`
-- `useClaude` returns `{ loading, error, call }` — consumed as-is in `App.jsx`
-- `OptionCard` props: `{ option, onChange }` — matched in `Step3_Memo.jsx`
-- `RiskBadge` props: `{ value, onChange }` — matched in `OptionCard.jsx`
-- `EXTRACT_STRUCTURE_SYSTEM` + `buildExtractStructurePrompt` — exported from `prompts/extractStructure.js`, imported in `App.jsx`
-- `GENERATE_MEMO_SYSTEM` + `buildGenerateMemoPrompt` — exported from `prompts/generateMemo.js`, imported in `App.jsx`
-- `BulletList` component in `OptionCard.jsx` and `EditableBulletList` in `Step3_Memo.jsx` are separate local components — no cross-file naming conflict
+Create `src/__tests__/validateJson.test.js`:
+```js
+import { describe, it, expect } from 'vitest';
+import { validateExtractStructure, validateGenerateMemo } from '../utils/validateJson';
+
+// ── validateExtractStructure ─────────────────────────────────────────────────
+
+describe('validateExtractStructure', () => {
+  const valid = {
+    title: 'Should we hire a designer?',
+    context: 'Budget is tight and launch is Q3.',
+    constraints: ['$50k budget'],
+    stakeholders: ['CEO'],
+    options: [
+      { name: 'Hire FT', description: 'Full-time hire' },
+      { name: 'Contract', description: 'Contract designer' },
+    ],
+  };
+
+  it('passes for a valid response', () => {
+    expect(() => validateExtractStructure(valid)).not.toThrow();
+  });
+
+  it('throws when title is missing', () => {
+    expect(() => validateExtractStructure({ ...valid, title: '' })).toThrow();
+  });
+
+  it('throws when title is under 10 characters', () => {
+    expect(() => validateExtractStructure({ ...valid, title: 'Short' })).toThrow();
+  });
+
+  it('throws when context is under 10 characters', () => {
+    expect(() => validateExtractStructure({ ...valid, context: 'Brief.' })).toThrow();
+  });
+
+  it('throws when options has fewer than 2 items', () => {
+    expect(() => validateExtractStructure({ ...valid, options: [valid.options[0]] })).toThrow();
+  });
+
+  it('throws when an option has no name', () => {
+    const bad = { ...valid, options: [{ name: '', description: 'desc' }, { name: 'B', description: 'desc' }] };
+    expect(() => validateExtractStructure(bad)).toThrow();
+  });
+});
+
+// ── validateGenerateMemo ─────────────────────────────────────────────────────
+
+describe('validateGenerateMemo', () => {
+  const validOption = {
+    name: 'Hire Full-Time',
+    description: 'Bring on a full-time designer at market rate.',
+    pros: ['Full control', 'Faster ramp-up'],
+    cons: ['Higher cost', 'Slower to hire'],
+    risk: 'Medium',
+  };
+
+  const valid = {
+    context: 'The company needs design capacity before the Q3 launch.',
+    options: [validOption, { ...validOption, name: 'Contract Out' }],
+    recommendation: 'We recommend contracting out given the budget constraints.',
+    nextSteps: ['Post job on Toptal', 'Define scope'],
+  };
+
+  it('passes for a valid response', () => {
+    expect(() => validateGenerateMemo(valid)).not.toThrow();
+  });
+
+  it('throws when context is under 10 characters', () => {
+    expect(() => validateGenerateMemo({ ...valid, context: 'Short.' })).toThrow();
+  });
+
+  it('throws when recommendation is under 10 characters', () => {
+    expect(() => validateGenerateMemo({ ...valid, recommendation: 'Hire.' })).toThrow();
+  });
+
+  it('throws when options has fewer than 2 items', () => {
+    expect(() => validateGenerateMemo({ ...valid, options: [validOption] })).toThrow();
+  });
+
+  it('throws when an option description is under 10 characters', () => {
+    const bad = { ...valid, options: [{ ...validOption, description: 'Short.' }, validOption] };
+    expect(() => validateGenerateMemo(bad)).toThrow();
+  });
+
+  it('throws when an option has fewer than 2 pros', () => {
+    const bad = { ...valid, options: [{ ...validOption, pros: ['Only one'] }, validOption] };
+    expect(() => validateGenerateMemo(bad)).toThrow();
+  });
+
+  it('throws when an option has fewer than 2 cons', () => {
+    const bad = { ...valid, options: [{ ...validOption, cons: ['Only one'] }, validOption] };
+    expect(() => validateGenerateMemo(bad)).toThrow();
+  });
+
+  it('silently defaults risk to Medium when the value is invalid', () => {
+    const data = {
+      ...valid,
+      options: [{ ...validOption, risk: 'Unknown' }, validOption],
+    };
+    validateGenerateMemo(data);
+    expect(data.options[0].risk).toBe('Medium');
+  });
+});
+```
+
+- [ ] **Step 2: Run to confirm all tests fail**
+
+```bash
+npm test validateJson
+```
+
+Expected: `Cannot find module '../utils/validateJson'` or similar.
+
+- [ ] **Step 3: Implement validateJson.js**
+
+Create `src/utils/validateJson.js`:
+```js
+const MIN_LENGTH = 10;
+const VALID_RISKS = ['Low', 'Medium', 'High'];
+
+export function validateExtractStructure(data) {
+  for (const field of ['title', 'context']) {
+    if (typeof data[field] !== 'string' || data[field].length < MIN_LENGTH) {
+      throw new Error(`Field "${field}" is missing or too short`);
+    }
+  }
+  if (!Array.isArray(data.options) || data.options.length < 2) {
+    throw new Error('options must have at least 2 items');
+  }
+  for (const opt of data.options) {
+    if (typeof opt.name !== 'string' || opt.name.trim() === '') {
+      throw new Error('Each option must have a non-empty name');
+    }
+  }
+}
+
+export function validateGenerateMemo(data) {
+  for (const field of ['context', 'recommendation']) {
+    if (typeof data[field] !== 'string' || data[field].length < MIN_LENGTH) {
+      throw new Error(`Field "${field}" is missing or too short`);
+    }
+  }
+  if (!Array.isArray(data.options) || data.options.length < 2) {
+    throw new Error('options must have at least 2 items');
+  }
+  for (const opt of data.options) {
+    if (!VALID_RISKS.includes(opt.risk)) {
+      opt.risk = 'Medium';
+    }
+    if (typeof opt.description !== 'string' || opt.description.length < MIN_LENGTH) {
+      throw new Error(`Option "${opt.name}" description is missing or too short`);
+    }
+    if (!Array.isArray(opt.pros) || opt.pros.length < 2) {
+      throw new Error(`Option "${opt.name}" must have at least 2 pros`);
+    }
+    if (!Array.isArray(opt.cons) || opt.cons.length < 2) {
+      throw new Error(`Option "${opt.name}" must have at least 2 cons`);
+    }
+  }
+}
+```
+
+- [ ] **Step 4: Run tests to confirm all pass**
+
+```bash
+npm test validateJson
+```
+
+Expected: `14 tests passed`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/utils/validateJson.js src/__tests__/validateJson.test.js
+git commit -m "feat: add JSON validation utility for Claude responses"
+```
+
+---
+
+## Task 3: Claude Prompts (TDD)
+
+**Files:**
+- Create: `apps/decision-memo/src/prompts/extractStructure.js`
+- Create: `apps/decision-memo/src/prompts/generateMemo.js`
+- Create: `apps/decision-memo/src/__tests__/prompts.test.js`
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `src/__tests__/prompts.test.js`:
+```js
+import { describe, it, expect } from 'vitest';
+import { buildExtractStructurePrompt } from '../prompts/extractStructure';
+import { buildGenerateMemoPrompt } from '../prompts/generateMemo';
+
+describe('buildExtractStructurePrompt', () => {
+  it('includes the user text in the user prompt', () => {
+    const { user } = buildExtractStructurePrompt('We must decide on vendor selection.');
+    expect(user).toContain('We must decide on vendor selection.');
+  });
+
+  it('instructs Claude to begin the response with {', () => {
+    const { user } = buildExtractStructurePrompt('test');
+    expect(user).toContain('Begin your response with {');
+  });
+
+  it('system prompt instructs JSON-only output', () => {
+    const { system } = buildExtractStructurePrompt('test');
+    expect(system.toLowerCase()).toContain('json');
+    expect(system).toContain('no markdown');
+  });
+
+  it('returns both system and user keys', () => {
+    const result = buildExtractStructurePrompt('test');
+    expect(result).toHaveProperty('system');
+    expect(result).toHaveProperty('user');
+  });
+});
+
+describe('buildGenerateMemoPrompt', () => {
+  const sampleData = {
+    title: 'Designer Hiring Decision',
+    context: 'We need design capacity before Q3.',
+    constraints: ['$50k budget', 'Q3 deadline'],
+    stakeholders: ['CEO', 'Head of Product'],
+    options: [
+      { name: 'Hire FT', description: 'Full-time hire' },
+      { name: 'Contract', description: 'Contract designer' },
+    ],
+  };
+
+  it('includes the decision title in the user prompt', () => {
+    const { user } = buildGenerateMemoPrompt(sampleData);
+    expect(user).toContain('Designer Hiring Decision');
+  });
+
+  it('includes all option names in the user prompt', () => {
+    const { user } = buildGenerateMemoPrompt(sampleData);
+    expect(user).toContain('Hire FT');
+    expect(user).toContain('Contract');
+  });
+
+  it('instructs Claude to begin the response with {', () => {
+    const { user } = buildGenerateMemoPrompt(sampleData);
+    expect(user).toContain('Begin your response with {');
+  });
+
+  it('system prompt enforces the risk enum', () => {
+    const { system } = buildGenerateMemoPrompt(sampleData);
+    expect(system).toContain('"Low"');
+    expect(system).toContain('"Medium"');
+    expect(system).toContain('"High"');
+  });
+
+  it('returns both system and user keys', () => {
+    const result = buildGenerateMemoPrompt(sampleData);
+    expect(result).toHaveProperty('system');
+    expect(result).toHaveProperty('user');
+  });
+});
+```
+
+- [ ] **Step 2: Run to confirm all tests fail**
+
+```bash
+npm test prompts
+```
+
+Expected: `Cannot find module '../prompts/extractStructure'`.
+
+- [ ] **Step 3: Implement extractStructure.js**
+
+Create `src/prompts/extractStructure.js`:
+```js
+export function buildExtractStructurePrompt(freeText) {
+  const system = `You are an expert at structuring executive decision briefs.
+Extract the key components from the user's decision description and return them as JSON.
+Return ONLY valid JSON — no markdown, no preamble, no explanation.
+If the input does not specify concrete options, create placeholder options named "Option A", "Option B", etc.
+Return between 2 and 4 options.`;
+
+  const user = `Extract a structured decision brief from the following description:
+
+${freeText}
+
+Return a JSON object with this exact shape:
+{
+  "title": "short decision title",
+  "context": "one to two sentence background summary",
+  "constraints": ["constraint 1", "constraint 2"],
+  "stakeholders": ["stakeholder 1"],
+  "options": [
+    { "name": "option name", "description": "brief description" }
+  ]
+}
+
+Begin your response with {`;
+
+  return { system, user };
+}
+```
+
+- [ ] **Step 4: Implement generateMemo.js**
+
+Create `src/prompts/generateMemo.js`:
+```js
+export function buildGenerateMemoPrompt(structuredData) {
+  const system = `You are an expert at writing clear, concise executive decision memos.
+Write a structured memo based on the provided decision data.
+Return ONLY valid JSON — no markdown, no preamble, no explanation.
+The "risk" field must be exactly "Low", "Medium", or "High" — no other values.
+Include between 2 and 4 pros and 2 and 4 cons per option.
+Write the recommendation as one concise paragraph.`;
+
+  const optionsList = structuredData.options
+    .map((o, i) => `${i + 1}. ${o.name}: ${o.description}`)
+    .join('\n');
+
+  const user = `Generate a decision memo for the following:
+
+Title: ${structuredData.title}
+Context: ${structuredData.context}
+Constraints: ${structuredData.constraints.join(', ')}
+Stakeholders: ${structuredData.stakeholders.join(', ')}
+Options to evaluate:
+${optionsList}
+
+Return a JSON object with this exact shape:
+{
+  "context": "expanded background paragraph",
+  "options": [
+    {
+      "name": "option name",
+      "description": "expanded description",
+      "pros": ["pro 1", "pro 2"],
+      "cons": ["con 1", "con 2"],
+      "risk": "Low | Medium | High"
+    }
+  ],
+  "recommendation": "one paragraph recommendation",
+  "nextSteps": ["step 1", "step 2"]
+}
+
+Begin your response with {`;
+
+  return { system, user };
+}
+```
+
+- [ ] **Step 5: Run tests to confirm all pass**
+
+```bash
+npm test prompts
+```
+
+Expected: `10 tests passed`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/prompts/ src/__tests__/prompts.test.js
+git commit -m "feat: add Claude prompt builders for extract and generate calls"
+```
+
+---
+
+## Task 4: useClaude Hook (TDD)
+
+**Files:**
+- Create: `apps/decision-memo/src/hooks/useClaude.js`
+- Create: `apps/decision-memo/src/__tests__/useClaude.test.js`
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `src/__tests__/useClaude.test.js`:
+```js
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useClaude } from '../hooks/useClaude';
+
+const mockCreate = vi.fn();
+
+vi.mock('@anthropic-ai/sdk', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    messages: { create: mockCreate },
+  })),
+}));
+
+describe('useClaude', () => {
+  beforeEach(() => {
+    mockCreate.mockReset();
+  });
+
+  it('returns text from the API on success', async () => {
+    mockCreate.mockResolvedValue({ content: [{ text: '{"ok": true}' }] });
+
+    const { result } = renderHook(() => useClaude('test-key'));
+    let text;
+    await act(async () => {
+      text = await result.current.call('system prompt', 'user prompt');
+    });
+
+    expect(text).toBe('{"ok": true}');
+  });
+
+  it('loading is true during the call and false after', async () => {
+    let resolveCreate;
+    mockCreate.mockReturnValue(new Promise(r => { resolveCreate = r; }));
+
+    const { result } = renderHook(() => useClaude('test-key'));
+
+    act(() => {
+      result.current.call('system', 'user').catch(() => {});
+    });
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      resolveCreate({ content: [{ text: '{}' }] });
+    });
+
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('sets error and throws when the API fails', async () => {
+    mockCreate.mockRejectedValue(new Error('invalid_api_key'));
+
+    const { result } = renderHook(() => useClaude('bad-key'));
+    await act(async () => {
+      await expect(result.current.call('system', 'user')).rejects.toThrow('invalid_api_key');
+    });
+
+    expect(result.current.error).toBe('invalid_api_key');
+  });
+
+  it('clears the previous error on a new call', async () => {
+    mockCreate
+      .mockRejectedValueOnce(new Error('first error'))
+      .mockResolvedValueOnce({ content: [{ text: '{}' }] });
+
+    const { result } = renderHook(() => useClaude('test-key'));
+
+    await act(async () => {
+      await expect(result.current.call('s', 'u')).rejects.toThrow();
+    });
+    expect(result.current.error).toBe('first error');
+
+    await act(async () => {
+      await result.current.call('s', 'u');
+    });
+    expect(result.current.error).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run to confirm tests fail**
+
+```bash
+npm test useClaude
+```
+
+Expected: `Cannot find module '../hooks/useClaude'`.
+
+- [ ] **Step 3: Implement useClaude.js**
+
+Create `src/hooks/useClaude.js`:
+```js
+import { useState } from 'react';
+import Anthropic from '@anthropic-ai/sdk';
+
+export function useClaude(apiKey) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function call(systemPrompt, userPrompt) {
+    setLoading(true);
+    setError(null);
+    try {
+      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+      const message = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      });
+      return message.content[0].text;
+    } catch (err) {
+      const msg = err.message || 'Claude API request failed';
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { loading, error, call };
+}
+```
+
+- [ ] **Step 4: Run tests to confirm all pass**
+
+```bash
+npm test useClaude
+```
+
+Expected: `4 tests passed`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/hooks/useClaude.js src/__tests__/useClaude.test.js
+git commit -m "feat: add useClaude hook wrapping Anthropic SDK"
+```
+
+---
+
+## Task 5: ApiKeyGate Component
+
+**Files:**
+- Create: `apps/decision-memo/src/components/ApiKeyGate.jsx`
+
+- [ ] **Step 1: Create ApiKeyGate.jsx**
+
+Create `src/components/ApiKeyGate.jsx`:
+```jsx
+import { useState } from 'react';
+
+export default function ApiKeyGate({ onSubmit }) {
+  const [value, setValue] = useState('');
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (trimmed) onSubmit(trimmed);
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-semibold mb-1 text-gray-900">Decision Memo Generator</h1>
+        <p className="text-gray-500 text-sm mb-6">
+          Enter your Anthropic API key to get started. It is stored only in your browser and never sent anywhere except Anthropic.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="sk-ant-..."
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={!value.trim()}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+          >
+            Continue
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Verify the component renders in the browser**
+
+In `src/App.jsx`, temporarily render only `<ApiKeyGate onSubmit={console.log} />`, then run `npm run dev` and confirm the gate form appears at `http://localhost:5173`. Stop the server.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/ApiKeyGate.jsx
+git commit -m "feat: add ApiKeyGate component"
+```
+
+---
+
+## Task 6: App.jsx Step State Machine
+
+**Files:**
+- Modify: `apps/decision-memo/src/App.jsx`
+
+- [ ] **Step 1: Replace App.jsx with the step state machine**
+
+Replace `src/App.jsx` with:
+```jsx
+import { useState } from 'react';
+import ApiKeyGate from './components/ApiKeyGate';
+
+// Step components imported in later tasks — stubs used for now
+function StepPlaceholder({ label }) {
+  return <div className="p-12 text-center text-gray-400 text-sm">{label}</div>;
+}
+
+export default function App() {
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('dmg_api_key') || '');
+  const [step, setStep] = useState(1);
+  const [structuredData, setStructuredData] = useState(null);
+  const [memoData, setMemoData] = useState(null);
+
+  function handleApiKey(key) {
+    localStorage.setItem('dmg_api_key', key);
+    setApiKey(key);
+  }
+
+  if (!apiKey) return <ApiKeyGate onSubmit={handleApiKey} />;
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {step === 1 && (
+        <StepPlaceholder label="Step 1 — Free Text Input (coming soon)" />
+      )}
+      {step === 2 && (
+        <StepPlaceholder label="Step 2 — Structured Form (coming soon)" />
+      )}
+      {step === 3 && (
+        <StepPlaceholder label="Step 3 — Memo Output (coming soon)" />
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Run dev server and confirm ApiKeyGate → placeholder flow**
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173`. Enter any key → should show "Step 1 — Free Text Input (coming soon)". Stop the server.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/App.jsx
+git commit -m "feat: add App step state machine with ApiKeyGate"
+```
+
+---
+
+## Task 7: Step1_FreeText Component
+
+**Files:**
+- Create: `apps/decision-memo/src/components/Step1_FreeText.jsx`
+
+- [ ] **Step 1: Create Step1_FreeText.jsx**
+
+Create `src/components/Step1_FreeText.jsx`:
+```jsx
+import { useState } from 'react';
+import { useClaude } from '../hooks/useClaude';
+import { buildExtractStructurePrompt } from '../prompts/extractStructure';
+import { validateExtractStructure } from '../utils/validateJson';
+
+export default function Step1_FreeText({ apiKey, onComplete }) {
+  const [text, setText] = useState('');
+  const [error, setError] = useState(null);
+  const { loading, call } = useClaude(apiKey);
+
+  async function handleAnalyse() {
+    setError(null);
+    const { system, user } = buildExtractStructurePrompt(text);
+    try {
+      const raw = await call(system, user);
+      const data = JSON.parse(raw);
+      validateExtractStructure(data);
+      onComplete(data);
+    } catch {
+      setError('Could not parse the response. Please try again.');
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <div className="bg-white rounded-lg shadow-md w-full max-w-2xl p-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Describe the decision</h2>
+        <p className="text-gray-500 text-sm mb-4">
+          Write freely — what needs to be decided, the context, any constraints or options you are considering.
+        </p>
+        <textarea
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm min-h-48 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          placeholder="e.g. We need to decide whether to hire a full-time designer or contract out. Budget is tight. Launch is Q3."
+          value={text}
+          onChange={e => setText(e.target.value)}
+        />
+        {error && (
+          <p className="text-red-600 text-sm mt-2">{error}</p>
+        )}
+        <button
+          onClick={handleAnalyse}
+          disabled={loading || text.trim().length < 20}
+          className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+        >
+          {loading ? 'Analysing…' : 'Analyse →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Wire Step1 into App.jsx**
+
+In `src/App.jsx`, replace the Step 1 `StepPlaceholder` block with:
+```jsx
+import Step1_FreeText from './components/Step1_FreeText';
+
+// inside the return:
+{step === 1 && (
+  <Step1_FreeText
+    apiKey={apiKey}
+    onComplete={data => { setStructuredData(data); setStep(2); }}
+  />
+)}
+```
+
+Add the import at the top of App.jsx alongside the other imports.
+
+- [ ] **Step 3: Run dev server and manually test Step 1**
+
+```bash
+npm run dev
+```
+
+Enter an API key. On Step 1, type a decision description and click Analyse. Confirm:
+- Button is disabled until 20+ characters are typed
+- Loading state shows "Analysing…"
+- After success, app moves to Step 2 placeholder
+
+Stop the server.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/Step1_FreeText.jsx src/App.jsx
+git commit -m "feat: add Step1_FreeText with Claude extract call"
+```
+
+---
+
+## Task 8: Step2_StructuredForm Component
+
+**Files:**
+- Create: `apps/decision-memo/src/components/Step2_StructuredForm.jsx`
+
+- [ ] **Step 1: Create Step2_StructuredForm.jsx**
+
+Create `src/components/Step2_StructuredForm.jsx`:
+```jsx
+import { useState } from 'react';
+import { useClaude } from '../hooks/useClaude';
+import { buildGenerateMemoPrompt } from '../prompts/generateMemo';
+import { validateGenerateMemo } from '../utils/validateJson';
+
+function Field({ label, value, onChange, multiline, className = '' }) {
+  const base = 'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+  return (
+    <div className={`mb-4 ${className}`}>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      {multiline ? (
+        <textarea className={`${base} resize-y min-h-20`} value={value} onChange={e => onChange(e.target.value)} />
+      ) : (
+        <input className={base} value={value} onChange={e => onChange(e.target.value)} />
+      )}
+    </div>
+  );
+}
+
+export default function Step2_StructuredForm({ initialData, apiKey, onComplete, onBack }) {
+  const [data, setData] = useState(initialData);
+  const [error, setError] = useState(null);
+  const { loading, call } = useClaude(apiKey);
+
+  function set(field, value) {
+    setData(d => ({ ...d, [field]: value }));
+  }
+
+  function setOption(index, field, value) {
+    setData(d => {
+      const options = [...d.options];
+      options[index] = { ...options[index], [field]: value };
+      return { ...d, options };
+    });
+  }
+
+  function addOption() {
+    setData(d => ({ ...d, options: [...d.options, { name: '', description: '' }] }));
+  }
+
+  function removeOption(index) {
+    setData(d => ({ ...d, options: d.options.filter((_, i) => i !== index) }));
+  }
+
+  async function handleGenerate() {
+    setError(null);
+    const { system, user } = buildGenerateMemoPrompt(data);
+    try {
+      const raw = await call(system, user);
+      const memo = JSON.parse(raw);
+      validateGenerateMemo(memo);
+      onComplete({ ...memo, title: data.title });
+    } catch {
+      setError('Could not generate the memo. Please try again.');
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Review the structure</h2>
+        <p className="text-gray-500 text-sm mb-6">
+          Check what was extracted and correct anything before generating the memo.
+        </p>
+
+        <Field label="Decision Title" value={data.title} onChange={v => set('title', v)} />
+        <Field label="Context" value={data.context} onChange={v => set('context', v)} multiline />
+        <Field
+          label="Constraints (one per line)"
+          value={data.constraints.join('\n')}
+          onChange={v => set('constraints', v.split('\n'))}
+          multiline
+        />
+        <Field
+          label="Stakeholders (one per line)"
+          value={data.stakeholders.join('\n')}
+          onChange={v => set('stakeholders', v.split('\n'))}
+          multiline
+        />
+
+        <p className="text-sm font-medium text-gray-700 mb-2">Options</p>
+        {data.options.map((opt, i) => (
+          <div key={i} className="border border-gray-200 rounded-lg p-4 mb-3">
+            <div className="flex gap-2 mb-2">
+              <input
+                className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Option name"
+                value={opt.name}
+                onChange={e => setOption(i, 'name', e.target.value)}
+              />
+              {data.options.length > 2 && (
+                <button
+                  onClick={() => removeOption(i)}
+                  className="text-red-400 hover:text-red-600 text-sm px-2"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <textarea
+              className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm resize-y min-h-16 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Brief description"
+              value={opt.description}
+              onChange={e => setOption(i, 'description', e.target.value)}
+            />
+          </div>
+        ))}
+
+        <button onClick={addOption} className="text-blue-600 hover:text-blue-800 text-sm mb-6 block">
+          + Add option
+        </button>
+
+        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+        <div className="flex gap-3">
+          <button
+            onClick={onBack}
+            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          >
+            ← Back
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+          >
+            {loading ? 'Generating…' : 'Generate Memo →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Wire Step2 into App.jsx**
+
+In `src/App.jsx`, replace the Step 2 placeholder:
+```jsx
+import Step2_StructuredForm from './components/Step2_StructuredForm';
+
+// inside the return:
+{step === 2 && (
+  <Step2_StructuredForm
+    initialData={structuredData}
+    apiKey={apiKey}
+    onComplete={data => { setMemoData(data); setStep(3); }}
+    onBack={() => setStep(1)}
+  />
+)}
+```
+
+- [ ] **Step 3: Run dev server and manually test Steps 1 and 2**
+
+```bash
+npm run dev
+```
+
+Complete Step 1 with a real decision. Confirm Step 2 pre-fills all fields. Edit a field. Remove an option. Add an option. Click Generate Memo. Confirm it moves to Step 3 placeholder. Stop the server.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/Step2_StructuredForm.jsx src/App.jsx
+git commit -m "feat: add Step2_StructuredForm with Claude generate call"
+```
+
+---
+
+## Task 9: MemoSection and OptionCard Components
+
+**Files:**
+- Create: `apps/decision-memo/src/components/MemoSection.jsx`
+- Create: `apps/decision-memo/src/components/OptionCard.jsx`
+
+- [ ] **Step 1: Create MemoSection.jsx**
+
+Create `src/components/MemoSection.jsx`:
+```jsx
+export default function MemoSection({ heading, children }) {
+  return (
+    <div className="mb-8">
+      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 print:text-gray-600">
+        {heading}
+      </h3>
+      {children}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Create the EditableText helper used inside OptionCard**
+
+This helper mounts initial text via a ref so React re-renders do not reset `contenteditable` content.
+
+The helper lives inside `OptionCard.jsx` (not a separate file — it's only used there).
+
+- [ ] **Step 3: Create OptionCard.jsx**
+
+Create `src/components/OptionCard.jsx`:
+```jsx
+import { useState, useRef, useEffect } from 'react';
+
+const RISK_CYCLE = ['Low', 'Medium', 'High'];
+
+const RISK_STYLES = {
+  Low: 'bg-green-100 text-green-800',
+  Medium: 'bg-yellow-100 text-yellow-800',
+  High: 'bg-red-100 text-red-800',
+};
+
+// Mounts initialValue once via ref so React re-renders don't reset the DOM.
+function EditableText({ initialValue, onBlur: onBlurProp, className = '' }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current) ref.current.textContent = initialValue;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <span
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      onBlur={e => onBlurProp?.(e.currentTarget.textContent.trim())}
+      className={`outline-none ${className}`}
+    />
+  );
+}
+
+function BulletList({ items, setItems }) {
+  function update(index, value) {
+    setItems(prev => prev.map((item, i) => (i === index ? value : item)));
+  }
+
+  function remove(index) {
+    setItems(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function add() {
+    setItems(prev => [...prev, 'New item']);
+  }
+
+  return (
+    <div>
+      <ul className="space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-1 group">
+            <EditableText
+              initialValue={item}
+              onBlur={v => update(i, v)}
+              className="flex-1 text-sm text-gray-700 leading-relaxed"
+            />
+            <button
+              onClick={() => remove(i)}
+              className="text-gray-300 hover:text-red-500 text-sm leading-5 print:hidden opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+              aria-label="Delete bullet"
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        onClick={add}
+        className="text-blue-500 hover:text-blue-700 text-xs mt-2 print:hidden"
+      >
+        + Add
+      </button>
+    </div>
+  );
+}
+
+export default function OptionCard({ option }) {
+  const [risk, setRisk] = useState(option.risk);
+  const [pros, setPros] = useState(option.pros);
+  const [cons, setCons] = useState(option.cons);
+
+  function cycleRisk() {
+    setRisk(r => RISK_CYCLE[(RISK_CYCLE.indexOf(r) + 1) % RISK_CYCLE.length]);
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-5 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <EditableText
+          initialValue={option.name}
+          className="font-semibold text-base text-gray-900"
+        />
+        <button
+          onClick={cycleRisk}
+          className={`text-xs font-medium px-2.5 py-1 rounded print:cursor-default ${RISK_STYLES[risk]}`}
+        >
+          Risk: {risk}
+        </button>
+      </div>
+      <EditableText
+        initialValue={option.description}
+        className="text-sm text-gray-600 mb-4 block leading-relaxed"
+      />
+      <div className="grid grid-cols-2 gap-6 text-sm">
+        <div>
+          <p className="font-semibold text-gray-700 mb-2">Pros</p>
+          <BulletList items={pros} setItems={setPros} />
+        </div>
+        <div>
+          <p className="font-semibold text-gray-700 mb-2">Cons</p>
+          <BulletList items={cons} setItems={setCons} />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/components/MemoSection.jsx src/components/OptionCard.jsx
+git commit -m "feat: add MemoSection and OptionCard components"
+```
+
+---
+
+## Task 10: Step3_Memo Component
+
+**Files:**
+- Create: `apps/decision-memo/src/components/Step3_Memo.jsx`
+- Create: `apps/decision-memo/src/components/ExportButton.jsx`
+
+- [ ] **Step 1: Create ExportButton.jsx**
+
+Create `src/components/ExportButton.jsx`:
+```jsx
+export default function ExportButton() {
+  return (
+    <button
+      onClick={() => window.print()}
+      className="bg-gray-800 text-white px-5 py-2 rounded hover:bg-gray-900 text-sm font-medium"
+    >
+      Export PDF
+    </button>
+  );
+}
+```
+
+- [ ] **Step 2: Create the PlaceholderField helper**
+
+This helper lives inside `Step3_Memo.jsx`. It simulates `placeholder` attribute behavior on a `contenteditable` span: the placeholder text clears on first focus and restores on blur if left empty.
+
+- [ ] **Step 3: Create Step3_Memo.jsx**
+
+Create `src/components/Step3_Memo.jsx`:
+```jsx
+import { useRef, useState } from 'react';
+import MemoSection from './MemoSection';
+import OptionCard from './OptionCard';
+import ExportButton from './ExportButton';
+
+const PLACEHOLDER_EXEC = '[ Executive Name ]';
+const PLACEHOLDER_AUTHOR = '[ Your Name ]';
+
+function PlaceholderField({ placeholder, className = '' }) {
+  const ref = useRef(null);
+  const [isPlaceholder, setIsPlaceholder] = useState(true);
+
+  function handleFocus() {
+    if (isPlaceholder && ref.current) {
+      ref.current.textContent = '';
+      setIsPlaceholder(false);
+    }
+  }
+
+  function handleBlur() {
+    if (ref.current && ref.current.textContent.trim() === '') {
+      ref.current.textContent = placeholder;
+      setIsPlaceholder(true);
+    }
+  }
+
+  return (
+    <span
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={`outline-none ${isPlaceholder ? 'text-gray-400 italic' : 'text-gray-800'} ${className}`}
+    >
+      {placeholder}
+    </span>
+  );
+}
+
+export default function Step3_Memo({ memoData, onBack }) {
+  const today = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      {/* Toolbar */}
+      <div className="max-w-3xl mx-auto flex justify-between items-center mb-4 print:hidden">
+        <button
+          onClick={onBack}
+          className="text-sm text-gray-500 hover:text-gray-800"
+        >
+          ← Back
+        </button>
+        <ExportButton />
+      </div>
+
+      {/* Document */}
+      <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-12 print:shadow-none print:rounded-none print:p-0 print:max-w-none">
+
+        {/* Header */}
+        <div className="border-b border-gray-200 pb-5 mb-7">
+          <p className="text-xs uppercase tracking-widest text-gray-400 font-sans mb-2">Decision Memo</p>
+          <h1
+            contentEditable
+            suppressContentEditableWarning
+            className="text-2xl font-bold text-gray-900 outline-none mb-5"
+          >
+            {memoData.title}
+          </h1>
+          <div className="text-sm text-gray-600 space-y-1.5 font-sans">
+            <div>
+              <span className="text-gray-400 mr-1">Date:</span>
+              <span
+                contentEditable
+                suppressContentEditableWarning
+                className="outline-none text-gray-700"
+              >
+                {today}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-400 mr-1">Prepared for:</span>
+              <PlaceholderField placeholder={PLACEHOLDER_EXEC} />
+            </div>
+            <div>
+              <span className="text-gray-400 mr-1">Prepared by:</span>
+              <PlaceholderField placeholder={PLACEHOLDER_AUTHOR} />
+            </div>
+          </div>
+        </div>
+
+        {/* Background */}
+        <MemoSection heading="Background">
+          <p
+            contentEditable
+            suppressContentEditableWarning
+            className="text-sm text-gray-700 leading-relaxed outline-none"
+          >
+            {memoData.context}
+          </p>
+        </MemoSection>
+
+        {/* Options */}
+        <MemoSection heading="Options">
+          {memoData.options.map((opt, i) => (
+            <OptionCard key={i} option={opt} />
+          ))}
+        </MemoSection>
+
+        {/* Recommendation */}
+        <MemoSection heading="Recommendation">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-5">
+            <p className="text-xs text-blue-400 font-sans mb-2 print:hidden">
+              ⚠ AI Draft — edit before sharing
+            </p>
+            <p
+              contentEditable
+              suppressContentEditableWarning
+              className="text-sm text-gray-800 leading-relaxed outline-none"
+            >
+              {memoData.recommendation}
+            </p>
+          </div>
+        </MemoSection>
+
+        {/* Next Steps */}
+        <MemoSection heading="Next Steps">
+          <ul className="space-y-2">
+            {memoData.nextSteps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-gray-300 mt-0.5 select-none">·</span>
+                <span
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="outline-none flex-1 leading-relaxed"
+                >
+                  {step}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </MemoSection>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Wire Step3 into App.jsx**
+
+In `src/App.jsx`, replace the Step 3 placeholder:
+```jsx
+import Step3_Memo from './components/Step3_Memo';
+
+// inside the return:
+{step === 3 && (
+  <Step3_Memo
+    memoData={memoData}
+    onBack={() => setStep(2)}
+  />
+)}
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/Step3_Memo.jsx src/components/ExportButton.jsx src/App.jsx
+git commit -m "feat: add Step3_Memo editable document and ExportButton"
+```
+
+---
+
+## Task 11: Final App.jsx Wiring and Cleanup
+
+**Files:**
+- Modify: `apps/decision-memo/src/App.jsx`
+
+- [ ] **Step 1: Write the final App.jsx**
+
+Replace `src/App.jsx` with the complete wired version:
+```jsx
+import { useState } from 'react';
+import ApiKeyGate from './components/ApiKeyGate';
+import Step1_FreeText from './components/Step1_FreeText';
+import Step2_StructuredForm from './components/Step2_StructuredForm';
+import Step3_Memo from './components/Step3_Memo';
+
+export default function App() {
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('dmg_api_key') || '');
+  const [step, setStep] = useState(1);
+  const [structuredData, setStructuredData] = useState(null);
+  const [memoData, setMemoData] = useState(null);
+
+  function handleApiKey(key) {
+    localStorage.setItem('dmg_api_key', key);
+    setApiKey(key);
+  }
+
+  if (!apiKey) return <ApiKeyGate onSubmit={handleApiKey} />;
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {step === 1 && (
+        <Step1_FreeText
+          apiKey={apiKey}
+          onComplete={data => { setStructuredData(data); setStep(2); }}
+        />
+      )}
+      {step === 2 && (
+        <Step2_StructuredForm
+          initialData={structuredData}
+          apiKey={apiKey}
+          onComplete={data => { setMemoData(data); setStep(3); }}
+          onBack={() => setStep(1)}
+        />
+      )}
+      {step === 3 && (
+        <Step3_Memo
+          memoData={memoData}
+          onBack={() => setStep(2)}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Run the full test suite**
+
+```bash
+npm test
+```
+
+Expected: all 18 tests pass (`validateJson`, `prompts`, `useClaude`). No failures.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/App.jsx
+git commit -m "feat: wire all steps in App.jsx"
+```
+
+---
+
+## Task 12: Manual Smoke Test
+
+- [ ] **Step 1: Start the dev server**
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173`.
+
+- [ ] **Step 2: API key gate**
+
+Enter a valid Anthropic API key. Confirm the app moves to Step 1.
+
+- [ ] **Step 3: Step 1 — Free text**
+
+Type a decision description (at least 20 characters). Confirm the Analyse button is disabled below that threshold, enables above it. Click Analyse. Confirm loading state shows. Confirm Step 2 loads with pre-filled fields.
+
+- [ ] **Step 4: Step 2 — Structured form**
+
+Verify all fields are pre-filled. Edit the title. Remove one option (confirm it only works when 3+ options exist). Add an option. Click Generate Memo. Confirm loading state. Confirm Step 3 loads.
+
+- [ ] **Step 5: Step 3 — Editable memo document**
+
+Confirm:
+- Title, Background, Options, Recommendation, Next Steps all render
+- Clicking any text field makes it directly editable
+- "Prepared for" and "Prepared by" show `[ Executive Name ]` / `[ Your Name ]` in italic muted style
+- Clicking a placeholder clears it immediately; leaving it empty restores it
+- Risk badge cycles Low → Medium → High → Low on click
+- Clicking `+` adds a bullet; clicking `×` deletes one
+- "AI Draft" label is visible
+
+- [ ] **Step 6: PDF export**
+
+Click Export PDF. Confirm:
+- Print dialog opens
+- In print preview, toolbar buttons, `×`/`+` bullet controls, and "AI Draft" label are hidden
+- Page margins are approximately 1 inch
+- Risk badges retain their background colors
+
+- [ ] **Step 7: Error path**
+
+Temporarily enter an invalid API key (clear localStorage, refresh, enter `sk-bad`). Attempt Step 1. Confirm an error message appears and no crash occurs.
+
+- [ ] **Step 8: Final commit**
+
+```bash
+git add -A
+git commit -m "feat: decision memo generator — complete"
+```
+
+---
+
+## Self-Review Checklist
+
+Run through the spec (`docs/superpowers/specs/2026-05-05-decision-memo-generator-design.md`) against this plan:
+
+| Spec requirement | Covered by |
+|---|---|
+| React + Vite + Tailwind | Task 1 |
+| API key stored in localStorage | Task 5, 6 |
+| Step 1: free-text input | Task 7 |
+| Step 2: AI pre-filled structured form | Task 8 |
+| Step 3: contenteditable document | Task 10 |
+| Two Claude API calls with JSON nudge (`Begin with {`) | Task 3 |
+| Validate string fields ≥ 10 chars | Task 2 |
+| Risk badge: Low / Medium / High enum, cycles on click | Task 9 |
+| Pros/cons: add bullet, delete bullet | Task 9 |
+| Placeholder fields clear on focus, restore on blur | Task 10 |
+| Recommendation labeled "AI Draft — edit before sharing" | Task 10 |
+| Export PDF via window.print() | Task 10 |
+| Print styles: hide controls, 1in margins | Task 1 (print.css) |
+| Error path: parse failure → "Try again" without losing form data | Tasks 7, 8 |
+| Risk defaults to Medium on invalid value | Task 2 |
