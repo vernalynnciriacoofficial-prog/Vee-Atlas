@@ -1,0 +1,9 @@
+@media print {
+  @page {
+    margin: 1in;
+  }
+
+  body {
+    background: white !important;
+  }
+}
