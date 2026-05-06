@@ -16,8 +16,8 @@ export default function Step1_FreeText({ apiKey, onComplete }) {
       const data = JSON.parse(raw);
       validateExtractStructure(data);
       onComplete(data);
-    } catch {
-      setError('Could not parse the response. Please try again.');
+    } catch (err) {
+      setError(err?.message || 'Could not parse the response. Please try again.');
     }
   }
 

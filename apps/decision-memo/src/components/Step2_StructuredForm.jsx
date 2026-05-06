@@ -50,8 +50,8 @@ export default function Step2_StructuredForm({ initialData, apiKey, onComplete, 
       const memo = JSON.parse(raw);
       validateGenerateMemo(memo);
       onComplete({ ...memo, title: data.title });
-    } catch {
-      setError('Could not generate the memo. Please try again.');
+    } catch (err) {
+      setError(err?.message || 'Could not generate the memo. Please try again.');
     }
   }
 

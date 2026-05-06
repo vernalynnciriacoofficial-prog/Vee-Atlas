@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import Anthropic from '@anthropic-ai/sdk';
 
+function extractMessage(err) {
+  try {
+    const match = err.message?.match(/\d{3} (\{.+\})$/s);
+    if (match) {
+      const body = JSON.parse(match[1]);
+      if (body.error?.message) return body.error.message;
+    }
+  } catch {}
+  return err.message || 'Claude API request failed';
+}
+
 export function useClaude(apiKey) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,7 +29,7 @@ export function useClaude(apiKey) {
       });
       return message.content[0].text;
     } catch (err) {
-      const msg = err.message || 'Claude API request failed';
+      const msg = extractMessage(err);
       setError(msg);
       throw new Error(msg);
     } finally {
