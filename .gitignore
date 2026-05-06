@@ -3,3 +3,8 @@ dist/
 .DS_Store
 *.pdf
 Claude Code/
+
+# Claude Code / tooling artifacts
+.claude/settings.local.json
+.playwright-mcp/
+app-*.png
