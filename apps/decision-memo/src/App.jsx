@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ApiKeyGate from './components/ApiKeyGate';
+import Step1_FreeText from './components/Step1_FreeText';
 
 // Step components imported in later tasks — stubs used for now
 function StepPlaceholder({ label }) {
@@ -22,7 +23,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100">
       {step === 1 && (
-        <StepPlaceholder label="Step 1 — Free Text Input (coming soon)" />
+        <Step1_FreeText
+          apiKey={apiKey}
+          onComplete={data => { setStructuredData(data); setStep(2); }}
+        />
       )}
       {step === 2 && (
         <StepPlaceholder label="Step 2 — Structured Form (coming soon)" />
