@@ -1,0 +1,239 @@
+/**
+ * Atlas Assistants Design System — Tokens v1.0
+ * atlasassistants.com
+ *
+ * Usage: @import './tokens.css'; (or link in HTML)
+ * These variables are the single source of truth for all Atlas projects.
+ */
+
+:root {
+
+  /* ============================================================
+     BRAND COLOR PALETTES
+  ============================================================ */
+
+  /* Green — Primary brand action color */
+  --atlas-green-50:  #EDFDF4;
+  --atlas-green-100: #D4F9E6;
+  --atlas-green-200: #A8F2CA;
+  --atlas-green-300: #72E8AA;
+  --atlas-green-400: #3DD98A;
+  --atlas-green-500: #13C96F;  /* Primary */
+  --atlas-green-600: #0DAF5F;
+  --atlas-green-700: #088C4B;
+  --atlas-green-800: #066B39;
+  --atlas-green-900: #044825;
+
+  /* Navy — Foundation / structural color */
+  --atlas-navy-50:  #EEF1F8;
+  --atlas-navy-100: #D8DDF0;
+  --atlas-navy-200: #B0BAE2;
+  --atlas-navy-300: #7A8CCA;
+  --atlas-navy-400: #4A5EA8;
+  --atlas-navy-500: #243580;
+  --atlas-navy-600: #1A2760;
+  --atlas-navy-700: #131D46;
+  --atlas-navy-800: #0D142E;
+  --atlas-navy-900: #080E1C;
+  --atlas-navy-950: #040810;
+
+  /* Gold — Premium / highlight accent */
+  --atlas-gold-50:  #FFFBF0;
+  --atlas-gold-100: #FEF3D6;
+  --atlas-gold-200: #FCE3B2;
+  --atlas-gold-300: #FAD07E;
+  --atlas-gold-400: #F7BA52;
+  --atlas-gold-500: #F5A623;  /* Accent */
+  --atlas-gold-600: #D48910;
+  --atlas-gold-700: #A86B0A;
+  --atlas-gold-800: #7C4E06;
+  --atlas-gold-900: #4E3002;
+
+  /* Neutral — UI chrome and text */
+  --atlas-neutral-50:  #F4F6FA;
+  --atlas-neutral-100: #E6EDF5;
+  --atlas-neutral-200: #CDD9E8;
+  --atlas-neutral-300: #A8BAD0;
+  --atlas-neutral-400: #7D93AE;
+  --atlas-neutral-500: #5A6E88;
+  --atlas-neutral-600: #3D4F66;
+  --atlas-neutral-700: #2A3446;
+  --atlas-neutral-800: #1C2230;
+  --atlas-neutral-900: #10141A;
+  --atlas-neutral-950: #080A0C;
+
+  /* ============================================================
+     SEMANTIC COLORS
+  ============================================================ */
+  --atlas-color-success: var(--atlas-green-500);
+  --atlas-color-warning: var(--atlas-gold-500);
+  --atlas-color-error:   #E84B4B;
+  --atlas-color-info:    #4B9AE8;
+
+  /* ============================================================
+     SURFACE TOKENS  (dark-first)
+  ============================================================ */
+  --atlas-surface-page:    #040810;   /* Deepest background */
+  --atlas-surface-base:    #080E1C;   /* Main page surface  */
+  --atlas-surface-raised:  #0D142E;   /* Cards, panels      */
+  --atlas-surface-overlay: #131D46;   /* Elevated modals    */
+  --atlas-surface-sunken:  #030608;   /* Inset / recessed   */
+
+  /* ============================================================
+     TEXT TOKENS
+  ============================================================ */
+  --atlas-text-primary:   #F0F4FF;
+  --atlas-text-secondary: #A8BAD0;
+  --atlas-text-tertiary:  #5A6E88;
+  --atlas-text-disabled:  #2A3446;
+  --atlas-text-inverse:   #040810;
+  --atlas-text-brand:     #3DD98A;    /* Green on dark */
+  --atlas-text-gold:      #F7BA52;    /* Gold on dark  */
+
+  /* ============================================================
+     BORDER TOKENS
+  ============================================================ */
+  --atlas-border-subtle:  rgba(255, 255, 255, 0.05);
+  --atlas-border-default: rgba(255, 255, 255, 0.10);
+  --atlas-border-strong:  rgba(255, 255, 255, 0.20);
+  --atlas-border-brand:   var(--atlas-green-500);
+  --atlas-border-gold:    var(--atlas-gold-500);
+
+  /* ============================================================
+     TYPOGRAPHY
+  ============================================================ */
+  --atlas-font-display: 'Fraunces', Georgia, serif;
+  --atlas-font-sans:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --atlas-font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* Type scale (rem) */
+  --atlas-text-xs:   0.75rem;    /* 12px */
+  --atlas-text-sm:   0.875rem;   /* 14px */
+  --atlas-text-base: 1rem;       /* 16px */
+  --atlas-text-lg:   1.125rem;   /* 18px */
+  --atlas-text-xl:   1.25rem;    /* 20px */
+  --atlas-text-2xl:  1.5rem;     /* 24px */
+  --atlas-text-3xl:  1.875rem;   /* 30px */
+  --atlas-text-4xl:  2.25rem;    /* 36px */
+  --atlas-text-5xl:  3rem;       /* 48px */
+  --atlas-text-6xl:  3.75rem;    /* 60px */
+  --atlas-text-7xl:  4.5rem;     /* 72px */
+
+  /* Font weights */
+  --atlas-weight-light:     300;
+  --atlas-weight-regular:   400;
+  --atlas-weight-medium:    500;
+  --atlas-weight-semibold:  600;
+  --atlas-weight-bold:      700;
+  --atlas-weight-extrabold: 800;
+
+  /* Line heights */
+  --atlas-leading-tight:   1.2;
+  --atlas-leading-snug:    1.35;
+  --atlas-leading-normal:  1.5;
+  --atlas-leading-relaxed: 1.65;
+  --atlas-leading-loose:   1.8;
+
+  /* Letter spacing */
+  --atlas-tracking-tight:   -0.04em;
+  --atlas-tracking-snug:    -0.02em;
+  --atlas-tracking-normal:  0em;
+  --atlas-tracking-wide:    0.04em;
+  --atlas-tracking-wider:   0.08em;
+  --atlas-tracking-widest:  0.16em;
+
+  /* ============================================================
+     SPACING  (4px base grid)
+  ============================================================ */
+  --atlas-space-0:  0;
+  --atlas-space-1:  0.25rem;   /*  4px */
+  --atlas-space-2:  0.5rem;    /*  8px */
+  --atlas-space-3:  0.75rem;   /* 12px */
+  --atlas-space-4:  1rem;      /* 16px */
+  --atlas-space-5:  1.25rem;   /* 20px */
+  --atlas-space-6:  1.5rem;    /* 24px */
+  --atlas-space-8:  2rem;      /* 32px */
+  --atlas-space-10: 2.5rem;    /* 40px */
+  --atlas-space-12: 3rem;      /* 48px */
+  --atlas-space-16: 4rem;      /* 64px */
+  --atlas-space-20: 5rem;      /* 80px */
+  --atlas-space-24: 6rem;      /* 96px */
+  --atlas-space-32: 8rem;      /* 128px */
+
+  /* ============================================================
+     BORDER RADIUS
+  ============================================================ */
+  --atlas-radius-sm:   4px;
+  --atlas-radius-md:   8px;
+  --atlas-radius-lg:   12px;
+  --atlas-radius-xl:   16px;
+  --atlas-radius-2xl:  24px;
+  --atlas-radius-full: 9999px;
+
+  /* ============================================================
+     SHADOWS
+  ============================================================ */
+  --atlas-shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.4);
+  --atlas-shadow-md:   0 4px 12px rgba(0, 0, 0, 0.5);
+  --atlas-shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.6);
+  --atlas-shadow-xl:   0 20px 60px rgba(0, 0, 0, 0.7);
+  --atlas-shadow-glow-green: 0 0 30px rgba(19, 201, 111, 0.30);
+  --atlas-shadow-glow-gold:  0 0 30px rgba(245, 166, 35, 0.30);
+
+  /* ============================================================
+     MOTION
+  ============================================================ */
+  --atlas-dur-instant:  50ms;
+  --atlas-dur-fast:     100ms;
+  --atlas-dur-normal:   200ms;
+  --atlas-dur-slow:     350ms;
+  --atlas-dur-slower:   500ms;
+  --atlas-dur-slowest:  800ms;
+
+  --atlas-ease-default: cubic-bezier(0.2, 0, 0, 1);
+  --atlas-ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --atlas-ease-out:     cubic-bezier(0, 0, 0.2, 1);
+  --atlas-ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+  --atlas-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --atlas-ease-bounce:  cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ============================================================
+     Z-INDEX
+  ============================================================ */
+  --atlas-z-base:     0;
+  --atlas-z-raised:   10;
+  --atlas-z-dropdown: 100;
+  --atlas-z-sticky:   200;
+  --atlas-z-overlay:  300;
+  --atlas-z-modal:    400;
+  --atlas-z-popover:  500;
+  --atlas-z-toast:    600;
+  --atlas-z-tooltip:  700;
+}
+
+/* ============================================================
+   LIGHT THEME OVERRIDES
+   Add class="atlas-light" to <html> or any container
+============================================================ */
+.atlas-light {
+  --atlas-surface-page:    #F4F6FA;
+  --atlas-surface-base:    #FFFFFF;
+  --atlas-surface-raised:  #F0F4FA;
+  --atlas-surface-overlay: #E6EDF5;
+  --atlas-surface-sunken:  #E0E8F2;
+
+  --atlas-text-primary:   #0D142E;
+  --atlas-text-secondary: #3D4F66;
+  --atlas-text-tertiary:  #7D93AE;
+  --atlas-text-disabled:  #CDD9E8;
+  --atlas-text-inverse:   #F0F4FF;
+
+  --atlas-border-subtle:  rgba(0, 0, 0, 0.06);
+  --atlas-border-default: rgba(0, 0, 0, 0.12);
+  --atlas-border-strong:  rgba(0, 0, 0, 0.22);
+
+  --atlas-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --atlas-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --atlas-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --atlas-shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+}

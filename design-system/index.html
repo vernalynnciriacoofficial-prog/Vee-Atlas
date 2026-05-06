@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlas Assistants — Design System v1.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       TOKENS
+    ========================================================= */
+    :root {
+      --g50:#EDFDF4;--g100:#D4F9E6;--g200:#A8F2CA;--g300:#72E8AA;
+      --g400:#3DD98A;--g500:#13C96F;--g600:#0DAF5F;--g700:#088C4B;
+      --g800:#066B39;--g900:#044825;
+
+      --n50:#EEF1F8;--n100:#D8DDF0;--n200:#B0BAE2;--n300:#7A8CCA;
+      --n400:#4A5EA8;--n500:#243580;--n600:#1A2760;--n700:#131D46;
+      --n800:#0D142E;--n900:#080E1C;--n950:#040810;
+
+      --d50:#FFFBF0;--d100:#FEF3D6;--d200:#FCE3B2;--d300:#FAD07E;
+      --d400:#F7BA52;--d500:#F5A623;--d600:#D48910;--d700:#A86B0A;
+      --d800:#7C4E06;--d900:#4E3002;
+
+      --u50:#F4F6FA;--u100:#E6EDF5;--u200:#CDD9E8;--u300:#A8BAD0;
+      --u400:#7D93AE;--u500:#5A6E88;--u600:#3D4F66;--u700:#2A3446;
+      --u800:#1C2230;--u900:#10141A;--u950:#080A0C;
+
+      --sp: #040810;
+      --sb: #080E1C;
+      --sr: #0D142E;
+      --so: #131D46;
+
+      --tp: #F0F4FF;
+      --ts: #A8BAD0;
+      --tt: #5A6E88;
+      --tb: #3DD98A;
+      --tg: #F7BA52;
+
+      --bs: rgba(255,255,255,0.05);
+      --bd: rgba(255,255,255,0.10);
+      --bk: rgba(255,255,255,0.20);
+
+      --fd: 'Fraunces', Georgia, serif;
+      --fs: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --fm: 'JetBrains Mono', monospace;
+
+      --sh-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --sh-md: 0 4px 12px rgba(0,0,0,0.5);
+      --sh-lg: 0 8px 32px rgba(0,0,0,0.6);
+      --sh-xl: 0 20px 60px rgba(0,0,0,0.7);
+      --sh-gg: 0 0 30px rgba(19,201,111,0.30);
+      --sh-gd: 0 0 30px rgba(245,166,35,0.30);
+
+      --r-sm:4px;--r-md:8px;--r-lg:12px;--r-xl:16px;--r-2xl:24px;--r-full:9999px;
+
+      --ef:100ms;--en:200ms;--es:350ms;
+      --ee: cubic-bezier(0.2,0,0,1);
+      --ep: cubic-bezier(0.34,1.56,0.64,1);
+      --eo: cubic-bezier(0,0,0.2,1);
+    }
+
+    /* =========================================================
+       RESET + BASE
+    ========================================================= */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth;scroll-padding-top:68px}
+    body{
+      background:var(--sp);
+      color:var(--tp);
+      font-family:var(--fs);
+      font-size:16px;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    button{font-family:inherit;cursor:pointer}
+    input,select,textarea{font-family:inherit}
+
+    /* =========================================================
+       LAYOUT
+    ========================================================= */
+    .container{max-width:1160px;margin:0 auto;padding:0 2rem}
+    .section{padding:88px 0}
+    .section+.section{border-top:1px solid var(--bs)}
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+    .header{
+      position:sticky;top:0;z-index:200;
+      height:64px;
+      background:rgba(4,8,16,0.88);
+      backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--bs);
+      display:flex;align-items:center;
+      padding:0 2rem;
+      justify-content:space-between;
+    }
+    .header-left{display:flex;align-items:center;gap:12px}
+    .logo-mark{
+      width:34px;height:34px;border-radius:var(--r-md);
+      background:linear-gradient(135deg,var(--g600),var(--g400));
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--fd);font-weight:700;font-size:15px;color:#fff;
+      box-shadow:var(--sh-gg);flex-shrink:0;
+    }
+    .logo-name{font-size:14px;font-weight:700;color:var(--tp);letter-spacing:-0.01em}
+    .logo-sep{width:1px;height:16px;background:var(--bd)}
+    .logo-tag{font-size:12px;color:var(--tt);letter-spacing:0.04em}
+    .header-nav{display:flex;align-items:center;gap:4px}
+    .header-nav a{
+      font-size:13px;font-weight:500;color:var(--tt);
+      padding:6px 12px;border-radius:var(--r-md);
+      transition:all var(--en) var(--ee);
+    }
+    .header-nav a:hover{color:var(--tp);background:rgba(255,255,255,0.05)}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .pill{
+      font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+      background:rgba(19,201,111,0.10);color:var(--g400);
+      border:1px solid rgba(19,201,111,0.22);
+      padding:4px 10px;border-radius:var(--r-full);
+    }
+
+    /* =========================================================
+       HERO
+    ========================================================= */
+    .hero{
+      padding:104px 0 80px;
+      position:relative;overflow:hidden;
+    }
+    .hero-glow-1{
+      position:absolute;top:-180px;left:-180px;
+      width:600px;height:600px;border-radius:50%;
+      background:radial-gradient(circle,rgba(19,201,111,0.09) 0%,transparent 65%);
+      pointer-events:none;
+    }
+    .hero-glow-2{
+      position:absolute;bottom:-120px;right:-100px;
+      width:500px;height:500px;border-radius:50%;
+      background:radial-gradient(circle,rgba(245,166,35,0.06) 0%,transparent 65%);
+      pointer-events:none;
+    }
+    .hero-eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+      color:var(--g400);margin-bottom:22px;
+    }
+    .hero-eyebrow::before{content:'';width:28px;height:2px;background:var(--g500)}
+    .hero-h1{
+      font-family:var(--fd);
+      font-size:clamp(2.6rem,5.5vw,4.75rem);
+      font-weight:700;line-height:1.08;
+      color:var(--tp);margin-bottom:22px;
+      letter-spacing:-0.02em;
+    }
+    .hero-h1 em{font-style:italic;color:var(--tb)}
+    .hero-sub{
+      font-size:1.1rem;color:var(--ts);
+      max-width:560px;line-height:1.75;margin-bottom:44px;
+    }
+    .hero-chips{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12px;font-weight:600;
+      background:var(--sr);border:1px solid var(--bd);
+      padding:8px 14px;border-radius:var(--r-full);
+      color:var(--ts);
+    }
+    .chip-dot{width:6px;height:6px;border-radius:50%}
+
+    /* =========================================================
+       SECTION ANATOMY
+    ========================================================= */
+    .sec-label{
+      display:flex;align-items:center;gap:12px;
+      font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;
+      color:var(--g500);margin-bottom:14px;
+    }
+    .sec-label::after{content:'';flex:1;height:1px;background:var(--bs)}
+    .sec-title{
+      font-family:var(--fd);
+      font-size:clamp(1.7rem,2.8vw,2.4rem);
+      font-weight:600;color:var(--tp);
+      margin-bottom:10px;letter-spacing:-0.02em;
+    }
+    .sec-desc{font-size:.975rem;color:var(--ts);max-width:600px;line-height:1.75;margin-bottom:52px}
+    .sub-title{
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;
+      color:var(--tt);margin-bottom:20px;padding-bottom:10px;
+      border-bottom:1px solid var(--bs);
+    }
+    .subsec{margin-bottom:64px}
+
+    /* =========================================================
+       COLOR SYSTEM
+    ========================================================= */
+    .brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:52px}
+    .brand-card{border-radius:var(--r-2xl);overflow:hidden;border:1px solid var(--bs)}
+    .brand-swatch{height:110px;display:flex;align-items:flex-end;padding:16px}
+    .brand-swatch-label{
+      font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+      color:rgba(255,255,255,0.55);
+    }
+    .brand-body{background:var(--sr);padding:16px 18px}
+    .brand-name{font-size:15px;font-weight:700;color:var(--tp);margin-bottom:4px}
+    .brand-hex{font-family:var(--fm);font-size:12px;color:var(--tt)}
+    .brand-usage{font-size:12px;color:var(--ts);margin-top:6px;line-height:1.5}
+
+    .palette-wrap{margin-bottom:40px}
+    .palette-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--tt);margin-bottom:10px}
+    .palette-row{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+    .pal{
+      aspect-ratio:1;border-radius:var(--r-sm);cursor:pointer;
+      transition:transform var(--ef) var(--ep);
+      position:relative;
+    }
+    .pal:hover{transform:scale(1.15);z-index:10}
+    .pal::after{
+      content:attr(title);
+      position:absolute;bottom:calc(100%+6px);left:50%;transform:translateX(-50%);
+      background:var(--so);border:1px solid var(--bd);
+      font-family:var(--fm);font-size:10px;color:var(--tp);
+      padding:3px 7px;border-radius:4px;white-space:nowrap;
+      pointer-events:none;opacity:0;transition:opacity var(--ef);z-index:20;
+    }
+    .pal:hover::after{opacity:1}
+
+    .semantic-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .sem-card{
+      background:var(--sr);border:1px solid var(--bs);
+      border-radius:var(--r-lg);padding:16px;
+    }
+    .sem-chip{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+      padding:5px 10px;border-radius:var(--r-full);margin-bottom:10px;
+    }
+    .sem-hex{font-family:var(--fm);font-size:12px;color:var(--tt)}
+    .sem-label{font-size:12px;color:var(--ts);margin-top:4px}
+
+    /* =========================================================
+       TYPOGRAPHY
+    ========================================================= */
+    .font-card{
+      background:var(--sr);border:1px solid var(--bs);
+      border-radius:var(--r-xl);padding:32px 36px;margin-bottom:16px;
+    }
+    .font-tag{
+      font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
+      color:var(--tt);margin-bottom:18px;
+    }
+    .font-sample-display{
+      font-family:var(--fd);font-size:2.75rem;font-weight:600;
+      color:var(--tp);line-height:1.1;margin-bottom:6px;
+    }
+    .font-sample-sans{
+      font-family:var(--fs);font-size:1.875rem;font-weight:500;
+      color:var(--tp);line-height:1.2;margin-bottom:6px;
+    }
+    .font-sample-mono{
+      font-family:var(--fm);font-size:1.15rem;
+      color:var(--tp);line-height:1.5;margin-bottom:6px;
+    }
+    .font-abc{font-size:13px;color:var(--tt);letter-spacing:0.06em;margin-top:14px;line-height:2}
+    .font-meta{
+      display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;
+    }
+    .font-meta-item{
+      font-size:12px;color:var(--tt);
+      background:var(--so);border:1px solid var(--bs);
+      padding:4px 10px;border-radius:var(--r-full);
+    }
+    .type-scale{border:1px solid var(--bs);border-radius:var(--r-xl);overflow:hidden}
+    .type-row{
+      display:grid;grid-template-columns:80px 1fr 100px 80px;
+      align-items:center;gap:16px;
+      padding:16px 24px;border-bottom:1px solid var(--bs);
+    }
+    .type-row:last-child{border-bottom:none}
+    .type-row:hover{background:rgba(255,255,255,0.02)}
+    .type-code{font-family:var(--fm);font-size:11px;color:var(--g400)}
+    .type-text{font-family:var(--fd);color:var(--tp);line-height:1.2}
+    .type-px{font-family:var(--fm);font-size:11px;color:var(--tt);text-align:right}
+    .type-lh{font-family:var(--fm);font-size:11px;color:var(--tt);text-align:right}
+
+    /* =========================================================
+       SPACING
+    ========================================================= */
+    .space-rows{display:flex;flex-direction:column;gap:10px}
+    .space-row{display:flex;align-items:center;gap:16px}
+    .space-token{font-family:var(--fm);font-size:12px;color:var(--g400);width:72px;flex-shrink:0}
+    .space-bar{height:22px;border-radius:3px;background:linear-gradient(90deg,var(--g800),var(--g500));min-width:3px}
+    .space-val{font-family:var(--fm);font-size:11px;color:var(--tt);white-space:nowrap}
+
+    /* =========================================================
+       RADIUS + SHADOW
+    ========================================================= */
+    .radius-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+    .radius-item{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .radius-box{
+      width:60px;height:60px;
+      background:var(--so);border:2px solid var(--bd);
+    }
+    .radius-label{font-family:var(--fm);font-size:11px;color:var(--tt);text-align:center}
+
+    .shadow-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .shadow-item{display:flex;flex-direction:column;align-items:center;gap:14px}
+    .shadow-box{
+      width:100%;height:72px;
+      background:var(--sr);border-radius:var(--r-lg);
+    }
+    .shadow-label{font-family:var(--fm);font-size:11px;color:var(--tt)}
+
+    /* =========================================================
+       COMPONENT SANDBOX
+    ========================================================= */
+    .sandbox{
+      background:var(--sb);border:1px solid var(--bs);
+      border-radius:var(--r-xl) var(--r-xl) 0 0;
+      padding:40px;
+    }
+    .sandbox-code{
+      background:var(--sr);border:1px solid var(--bs);
+      border-radius:0 0 var(--r-xl) var(--r-xl);
+      padding:18px 24px;margin-bottom:32px;
+      overflow-x:auto;
+    }
+    .sandbox-code pre{font-family:var(--fm);font-size:12px;color:var(--ts);white-space:pre}
+    .code-g{color:var(--g400)} .code-d{color:var(--tg)} .code-c{color:var(--tt);font-style:italic}
+
+    /* ---- BUTTONS ---- */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      font-family:var(--fs);font-weight:600;font-size:14px;line-height:1;
+      border:none;border-radius:var(--r-md);cursor:pointer;
+      transition:all var(--en) var(--ee);text-decoration:none;
+      white-space:nowrap;user-select:none;
+    }
+    .btn:focus-visible{outline:2px solid var(--g400);outline-offset:2px}
+    .btn-sm{padding:8px 14px;font-size:13px}
+    .btn-md{padding:11px 20px}
+    .btn-lg{padding:14px 28px;font-size:15px;border-radius:var(--r-lg)}
+    .btn-xl{padding:17px 36px;font-size:16px;border-radius:var(--r-lg)}
+    .btn-primary{background:var(--g500);color:#fff}
+    .btn-primary:hover{background:var(--g400);box-shadow:var(--sh-gg);transform:translateY(-1px)}
+    .btn-primary:active{background:var(--g600);transform:none;box-shadow:none}
+    .btn-secondary{background:transparent;color:var(--g400);border:1.5px solid var(--g700)}
+    .btn-secondary:hover{background:rgba(19,201,111,0.08);border-color:var(--g400)}
+    .btn-ghost{background:transparent;color:var(--ts);border:1.5px solid var(--bd)}
+    .btn-ghost:hover{background:var(--sr);color:var(--tp);border-color:var(--bk)}
+    .btn-gold{background:var(--d500);color:#000;font-weight:700}
+    .btn-gold:hover{background:var(--d400);box-shadow:var(--sh-gd);transform:translateY(-1px)}
+    .btn-danger{background:transparent;color:#E84B4B;border:1.5px solid rgba(232,75,75,0.3)}
+    .btn-danger:hover{background:rgba(232,75,75,0.1);border-color:#E84B4B}
+    .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+    .btn-icon{width:40px;height:40px;padding:0;border-radius:var(--r-md)}
+    .btn-icon-lg{width:48px;height:48px;padding:0;border-radius:var(--r-lg)}
+
+    /* ---- INPUTS ---- */
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field-label{font-size:13px;font-weight:600;color:var(--ts)}
+    .field-label-req::after{content:' *';color:var(--g500)}
+    .input{
+      font-family:var(--fs);font-size:14px;color:var(--tp);
+      background:var(--sr);border:1.5px solid var(--bd);
+      border-radius:var(--r-md);padding:10px 14px;outline:none;
+      transition:all var(--en) var(--ee);width:100%;
+    }
+    .input::placeholder{color:var(--tt)}
+    .input:hover{border-color:var(--bk)}
+    .input:focus{
+      border-color:var(--g500);background:var(--so);
+      box-shadow:0 0 0 3px rgba(19,201,111,0.12);
+    }
+    .input-error{border-color:#E84B4B}
+    .input-error:focus{border-color:#E84B4B;box-shadow:0 0 0 3px rgba(232,75,75,0.12)}
+    .field-hint{font-size:12px;color:var(--tt)}
+    .field-error{font-size:12px;color:#E84B4B}
+    textarea.input{min-height:100px;resize:vertical}
+    .sel-wrap{position:relative}
+    .sel-wrap::after{
+      content:'';position:absolute;right:14px;top:50%;transform:translateY(-50%);
+      width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
+      border-top:5px solid var(--tt);pointer-events:none;
+    }
+    select.input{appearance:none;cursor:pointer}
+
+    /* ---- CARDS ---- */
+    .card{
+      background:var(--sr);border:1px solid var(--bs);
+      border-radius:var(--r-xl);padding:24px;
+      transition:all var(--es) var(--ee);
+    }
+    .card:hover{border-color:var(--bd);box-shadow:var(--sh-lg)}
+    .card-elevated{background:var(--so);box-shadow:var(--sh-md)}
+    .card-bordered{background:transparent;border:1.5px solid var(--bd)}
+    .card-green{
+      background:var(--sr);border:1px solid rgba(19,201,111,0.20);
+      position:relative;overflow:hidden;
+    }
+    .card-green::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--g700),var(--g400),var(--g700));
+    }
+    .card-gold{
+      background:var(--sr);border:1px solid rgba(245,166,35,0.20);
+      position:relative;overflow:hidden;
+    }
+    .card-gold::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--d700),var(--d400),var(--d700));
+    }
+
+    /* ---- BADGES ---- */
+    .badge{
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
+      padding:4px 10px;border-radius:var(--r-full);line-height:1;
+    }
+    .badge-green{background:rgba(19,201,111,0.12);color:var(--g400);border:1px solid rgba(19,201,111,0.22)}
+    .badge-gold{background:rgba(245,166,35,0.12);color:var(--d400);border:1px solid rgba(245,166,35,0.22)}
+    .badge-navy{background:rgba(74,94,168,0.15);color:var(--n300);border:1px solid rgba(74,94,168,0.25)}
+    .badge-error{background:rgba(232,75,75,0.12);color:#E84B4B;border:1px solid rgba(232,75,75,0.22)}
+    .badge-neutral{background:rgba(90,110,136,0.15);color:var(--u300);border:1px solid rgba(90,110,136,0.2)}
+    .badge::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor}
+
+    /* ---- ALERTS ---- */
+    .alert{
+      display:flex;gap:14px;padding:16px 20px;
+      border-radius:var(--r-lg);border-left:3px solid;margin-bottom:12px;
+    }
+    .alert-icon{font-size:18px;flex-shrink:0;line-height:1.45}
+    .alert-body{flex:1}
+    .alert-title{font-size:14px;font-weight:700;margin-bottom:3px}
+    .alert-desc{font-size:13px;line-height:1.55}
+    .alert-success{background:rgba(19,201,111,0.07);border-color:var(--g500)}
+    .alert-success .alert-title{color:var(--g400)}
+    .alert-success .alert-desc{color:var(--g300)}
+    .alert-warning{background:rgba(245,166,35,0.07);border-color:var(--d500)}
+    .alert-warning .alert-title{color:var(--d400)}
+    .alert-warning .alert-desc{color:var(--d300)}
+    .alert-error{background:rgba(232,75,75,0.07);border-color:#E84B4B}
+    .alert-error .alert-title{color:#E84B4B}
+    .alert-error .alert-desc{color:#f09090}
+    .alert-info{background:rgba(75,154,232,0.07);border-color:#4B9AE8}
+    .alert-info .alert-title{color:#4B9AE8}
+    .alert-info .alert-desc{color:#a0c8f8}
+
+    /* ---- AVATAR ---- */
+    .av{
+      border-radius:var(--r-full);background:var(--so);border:2px solid var(--bd);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:var(--ts);flex-shrink:0;overflow:hidden;
+    }
+    .av-sm{width:32px;height:32px;font-size:12px}
+    .av-md{width:40px;height:40px;font-size:14px}
+    .av-lg{width:52px;height:52px;font-size:18px}
+    .av-xl{width:68px;height:68px;font-size:24px}
+    .av-green{background:rgba(19,201,111,0.14);border-color:rgba(19,201,111,0.3);color:var(--g400)}
+    .av-gold{background:rgba(245,166,35,0.14);border-color:rgba(245,166,35,0.3);color:var(--d400)}
+
+    /* ---- TABS ---- */
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--bs);margin-bottom:24px}
+    .tab{
+      padding:10px 18px;font-size:14px;font-weight:500;
+      color:var(--tt);border:none;background:transparent;cursor:pointer;
+      border-bottom:2px solid transparent;margin-bottom:-1px;
+      transition:all var(--en) var(--ee);
+    }
+    .tab:hover{color:var(--ts)}
+    .tab.active{color:var(--g400);border-bottom-color:var(--g500)}
+
+    /* ---- STEPPER ---- */
+    .stepper{display:flex;align-items:center}
+    .step{display:flex;align-items:center;gap:10px}
+    .step-c{
+      width:32px;height:32px;border-radius:50%;
+      border:2px solid var(--bd);
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:700;color:var(--tt);flex-shrink:0;
+      transition:all var(--en) var(--ee);
+    }
+    .step-c.active{border-color:var(--g500);background:rgba(19,201,111,0.12);color:var(--g400)}
+    .step-c.done{border-color:var(--g700);background:var(--g700);color:#fff}
+    .step-t{font-size:13px;font-weight:500;color:var(--tt)}
+    .step-t.active{color:var(--tp)}
+    .step-line{flex:1;height:2px;background:var(--bs);margin:0 12px;min-width:40px}
+    .step-line.done{background:var(--g700)}
+
+    /* ---- STAT CARD ---- */
+    .stat{
+      background:var(--sr);border:1px solid var(--bs);
+      border-radius:var(--r-xl);padding:24px;
+    }
+    .stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--tt);margin-bottom:10px}
+    .stat-val{
+      font-family:var(--fd);font-size:2.4rem;font-weight:700;
+      color:var(--tp);line-height:1;margin-bottom:8px;
+    }
+    .stat-change{font-size:13px;font-weight:600}
+    .up{color:var(--g400)}.dn{color:#E84B4B}
+
+    /* ---- PROGRESS ---- */
+    .progress{height:6px;background:var(--so);border-radius:var(--r-full);overflow:hidden;margin-bottom:12px}
+    .progress-fill{height:100%;border-radius:var(--r-full);background:linear-gradient(90deg,var(--g700),var(--g400))}
+    .progress-gold{background:linear-gradient(90deg,var(--d700),var(--d400))}
+
+    /* ---- TOGGLE ---- */
+    .toggle-wrap{display:flex;align-items:center;gap:10px;cursor:pointer;width:fit-content}
+    .toggle{
+      width:44px;height:24px;
+      background:var(--so);border:1.5px solid var(--bd);border-radius:var(--r-full);
+      position:relative;transition:all var(--en) var(--ee);cursor:pointer;flex-shrink:0;
+    }
+    .toggle::after{
+      content:'';position:absolute;top:2px;left:2px;
+      width:16px;height:16px;background:var(--tt);border-radius:50%;
+      transition:all var(--en) var(--ep);
+    }
+    .toggle.on{background:rgba(19,201,111,0.18);border-color:var(--g500)}
+    .toggle.on::after{background:var(--g400);left:calc(100% - 18px)}
+    .toggle-text{font-size:14px;font-weight:500;color:var(--ts)}
+
+    /* ---- SKELETON ---- */
+    .skel{
+      background:linear-gradient(90deg,var(--sr) 0%,var(--so) 50%,var(--sr) 100%);
+      background-size:200% 100%;
+      animation:shimmer 1.5s infinite linear;
+      border-radius:var(--r-md);
+    }
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+    /* ---- TOOLTIP ---- */
+    .tt-wrap{position:relative;display:inline-block}
+    .tt-box{
+      position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+      background:var(--so);border:1px solid var(--bd);border-radius:var(--r-md);
+      padding:6px 10px;font-size:12px;color:var(--ts);white-space:nowrap;
+      box-shadow:var(--sh-md);pointer-events:none;
+    }
+    .tt-box::after{
+      content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+      border:5px solid transparent;border-top-color:var(--bd);
+    }
+
+    /* ---- DIVIDER ---- */
+    .div{border:none;border-top:1px solid var(--bs);margin:20px 0}
+    .div-strong{border-color:var(--bd)}
+    .div-brand{border-color:rgba(19,201,111,0.25)}
+
+    /* =========================================================
+       MOTION SECTION
+    ========================================================= */
+    .motion-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+    .motion-box{
+      aspect-ratio:1;
+      background:var(--so);border:1px solid var(--bd);border-radius:var(--r-lg);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      font-size:11px;font-weight:600;color:var(--tt);letter-spacing:0.06em;text-transform:uppercase;
+      cursor:pointer;transition:all var(--en) var(--ee);overflow:hidden;
+    }
+    .motion-box:hover{border-color:var(--g500);color:var(--g400);background:rgba(19,201,111,0.06)}
+    .motion-icon{font-size:24px;transition:all var(--es) var(--ep)}
+    .motion-box:hover .motion-icon{transform:scale(1.3)}
+    .motion-box.fx-slide:hover .motion-icon{transform:translateY(-4px) scale(1.1)}
+    .motion-box.fx-spin:hover .motion-icon{transform:rotate(180deg) scale(1.1)}
+    .motion-box.fx-bounce:hover .motion-icon{animation:bounce-demo 0.5s var(--ep)}
+    @keyframes bounce-demo{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+    .token-tbl{width:100%;border-collapse:collapse;margin-bottom:32px}
+    .token-tbl th{
+      font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;
+      color:var(--tt);text-align:left;padding:8px 16px;border-bottom:1px solid var(--bs);
+    }
+    .token-tbl td{
+      padding:11px 16px;border-bottom:1px solid var(--bs);font-size:13px;color:var(--ts);
+    }
+    .token-tbl tr:last-child td{border-bottom:none}
+    .token-tbl tr:hover td{background:rgba(255,255,255,0.015)}
+    .token-tbl td:first-child{font-family:var(--fm);font-size:12px;color:var(--g400)}
+    .token-tbl td:nth-child(2){font-family:var(--fm);font-size:12px;color:var(--tg)}
+
+    /* =========================================================
+       FLEX / GRID HELPERS
+    ========================================================= */
+    .flex{display:flex}.flex-col{flex-direction:column}
+    .items-c{align-items:center}.items-s{align-items:flex-start}
+    .justify-b{justify-content:space-between}
+    .gap-1{gap:4px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+    .gap-5{gap:20px}.gap-6{gap:24px}.gap-8{gap:32px}
+    .g2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .w-full{width:100%}
+    .mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+    .mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}
+    .mt-2{margin-top:8px}.mt-4{margin-top:16px}
+    .p-4{padding:16px}.p-6{padding:24px}.p-8{padding:32px}
+    .text-sm{font-size:14px}.text-xs{font-size:12px}
+    .text-mono{font-family:var(--fm)}.text-t{color:var(--tt)}.text-s{color:var(--ts)}
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+    .footer{
+      padding:48px 0;margin-top:80px;
+      border-top:1px solid var(--bs);
+    }
+    .footer-inner{
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    }
+    .footer-text{font-size:13px;color:var(--tt)}
+    .footer-right{display:flex;align-items:center;gap:16px}
+    .footer-link{font-size:13px;color:var(--tt);transition:color var(--en) var(--ee)}
+    .footer-link:hover{color:var(--g400)}
+
+    /* =========================================================
+       ANIMATE IN
+    ========================================================= */
+    .ani{opacity:0;transform:translateY(18px);transition:opacity .55s var(--eo),transform .55s var(--eo)}
+    .ani.show{opacity:1;transform:none}
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media(max-width:900px){
+      .header-nav{display:none}
+      .brand-grid{grid-template-columns:1fr}
+      .palette-row{grid-template-columns:repeat(5,1fr)}
+      .radius-grid{grid-template-columns:repeat(3,1fr)}
+      .shadow-grid{grid-template-columns:repeat(2,1fr)}
+      .g2,.g3,.g4{grid-template-columns:1fr}
+      .semantic-grid{grid-template-columns:repeat(2,1fr)}
+      .motion-grid{grid-template-columns:repeat(3,1fr)}
+    }
+    @media(max-width:600px){
+      .hero-h1{font-size:2.2rem}
+      .container{padding:0 1.25rem}
+      .section{padding:60px 0}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     HEADER
+═══════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">A</div>
+    <span class="logo-name">Atlas Assistants</span>
+    <div class="logo-sep"></div>
+    <span class="logo-tag">Design System</span>
+  </div>
+  <nav class="header-nav">
+    <a href="#foundations">Foundations</a>
+    <a href="#typography">Typography</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#components">Components</a>
+    <a href="#motion">Motion</a>
+  </nav>
+  <div class="header-right">
+    <span class="pill">v1.0</span>
+  </div>
+</header>
+
+
+<!-- ═══════════════════════════════════════
+     HERO
+═══════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="container">
+    <div class="hero-eyebrow">Atlas Assistants · Internal Design System</div>
+    <h1 class="hero-h1">
+      The language we<br>
+      <em>all speak</em> together.
+    </h1>
+    <p class="hero-sub">
+      A shared visual system for every Atlas team project — from engagement decks to internal tools. Consistent tokens, components, and principles that eliminate guesswork and ship faster.
+    </p>
+    <div class="hero-chips">
+      <span class="chip"><span class="chip-dot" style="background:var(--g500)"></span>Color System</span>
+      <span class="chip"><span class="chip-dot" style="background:var(--d500)"></span>Typography Scale</span>
+      <span class="chip"><span class="chip-dot" style="background:var(--n300)"></span>Spacing Tokens</span>
+      <span class="chip"><span class="chip-dot" style="background:var(--g400)"></span>Component Library</span>
+      <span class="chip"><span class="chip-dot" style="background:var(--d400)"></span>Motion System</span>
+      <span class="chip"><span class="chip-dot" style="background:var(--u400)"></span>Tailwind Preset</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     FOUNDATIONS — COLOR
+═══════════════════════════════════════ -->
+<section id="foundations" class="section">
+  <div class="container">
+    <div class="sec-label">01 — Foundations</div>
+    <h2 class="sec-title">Color System</h2>
+    <p class="sec-desc">Three core palettes — Green for action, Navy for structure, Gold for premium moments — supported by a neutral scale for UI chrome and text.</p>
+
+    <!-- Brand color cards -->
+    <div class="brand-grid ani">
+      <div class="brand-card">
+        <div class="brand-swatch" style="background:linear-gradient(135deg,#088C4B,#3DD98A)">
+          <span class="brand-swatch-label">Primary</span>
+        </div>
+        <div class="brand-body">
+          <div class="brand-name">Atlas Green</div>
+          <div class="brand-hex">#13C96F · --atlas-green-500</div>
+          <div class="brand-usage">Primary CTAs, links, active states, success signals, brand presence.</div>
+        </div>
+      </div>
+      <div class="brand-card">
+        <div class="brand-swatch" style="background:linear-gradient(135deg,#080E1C,#243580)">
+          <span class="brand-swatch-label">Foundation</span>
+        </div>
+        <div class="brand-body">
+          <div class="brand-name">Atlas Navy</div>
+          <div class="brand-hex">#080E1C · --atlas-navy-900</div>
+          <div class="brand-usage">Backgrounds, structural surfaces, headers, deep UI foundations.</div>
+        </div>
+      </div>
+      <div class="brand-card">
+        <div class="brand-swatch" style="background:linear-gradient(135deg,#A86B0A,#F7BA52)">
+          <span class="brand-swatch-label">Accent</span>
+        </div>
+        <div class="brand-body">
+          <div class="brand-name">Atlas Gold</div>
+          <div class="brand-hex">#F5A623 · --atlas-gold-500</div>
+          <div class="brand-usage">Premium highlights, awards, energy signals, key callouts.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full palettes -->
+    <div class="subsec ani">
+      <div class="sub-title">Full Palettes</div>
+
+      <div class="palette-wrap">
+        <div class="palette-name">Green</div>
+        <div class="palette-row">
+          <div class="pal" title="#EDFDF4 · 50"  style="background:#EDFDF4"></div>
+          <div class="pal" title="#D4F9E6 · 100" style="background:#D4F9E6"></div>
+          <div class="pal" title="#A8F2CA · 200" style="background:#A8F2CA"></div>
+          <div class="pal" title="#72E8AA · 300" style="background:#72E8AA"></div>
+          <div class="pal" title="#3DD98A · 400" style="background:#3DD98A"></div>
+          <div class="pal" title="#13C96F · 500 ★" style="background:#13C96F;outline:2px solid var(--g400);outline-offset:2px"></div>
+          <div class="pal" title="#0DAF5F · 600" style="background:#0DAF5F"></div>
+          <div class="pal" title="#088C4B · 700" style="background:#088C4B"></div>
+          <div class="pal" title="#066B39 · 800" style="background:#066B39"></div>
+          <div class="pal" title="#044825 · 900" style="background:#044825"></div>
+        </div>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="palette-name">Navy</div>
+        <div class="palette-row">
+          <div class="pal" title="#EEF1F8 · 50"  style="background:#EEF1F8"></div>
+          <div class="pal" title="#D8DDF0 · 100" style="background:#D8DDF0"></div>
+          <div class="pal" title="#B0BAE2 · 200" style="background:#B0BAE2"></div>
+          <div class="pal" title="#7A8CCA · 300" style="background:#7A8CCA"></div>
+          <div class="pal" title="#4A5EA8 · 400" style="background:#4A5EA8"></div>
+          <div class="pal" title="#243580 · 500" style="background:#243580"></div>
+          <div class="pal" title="#1A2760 · 600" style="background:#1A2760"></div>
+          <div class="pal" title="#131D46 · 700" style="background:#131D46"></div>
+          <div class="pal" title="#0D142E · 800" style="background:#0D142E"></div>
+          <div class="pal" title="#040810 · 950 ★" style="background:#040810;outline:2px solid var(--n300);outline-offset:2px"></div>
+        </div>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="palette-name">Gold</div>
+        <div class="palette-row">
+          <div class="pal" title="#FFFBF0 · 50"  style="background:#FFFBF0"></div>
+          <div class="pal" title="#FEF3D6 · 100" style="background:#FEF3D6"></div>
+          <div class="pal" title="#FCE3B2 · 200" style="background:#FCE3B2"></div>
+          <div class="pal" title="#FAD07E · 300" style="background:#FAD07E"></div>
+          <div class="pal" title="#F7BA52 · 400" style="background:#F7BA52"></div>
+          <div class="pal" title="#F5A623 · 500 ★" style="background:#F5A623;outline:2px solid var(--d400);outline-offset:2px"></div>
+          <div class="pal" title="#D48910 · 600" style="background:#D48910"></div>
+          <div class="pal" title="#A86B0A · 700" style="background:#A86B0A"></div>
+          <div class="pal" title="#7C4E06 · 800" style="background:#7C4E06"></div>
+          <div class="pal" title="#4E3002 · 900" style="background:#4E3002"></div>
+        </div>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="palette-name">Neutral</div>
+        <div class="palette-row">
+          <div class="pal" title="#F4F6FA · 50"  style="background:#F4F6FA"></div>
+          <div class="pal" title="#E6EDF5 · 100" style="background:#E6EDF5"></div>
+          <div class="pal" title="#CDD9E8 · 200" style="background:#CDD9E8"></div>
+          <div class="pal" title="#A8BAD0 · 300" style="background:#A8BAD0"></div>
+          <div class="pal" title="#7D93AE · 400" style="background:#7D93AE"></div>
+          <div class="pal" title="#5A6E88 · 500" style="background:#5A6E88"></div>
+          <div class="pal" title="#3D4F66 · 600" style="background:#3D4F66"></div>
+          <div class="pal" title="#2A3446 · 700" style="background:#2A3446"></div>
+          <div class="pal" title="#1C2230 · 800" style="background:#1C2230"></div>
+          <div class="pal" title="#080A0C · 950" style="background:#080A0C"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semantic -->
+    <div class="subsec ani">
+      <div class="sub-title">Semantic Colors</div>
+      <div class="semantic-grid">
+        <div class="sem-card">
+          <span class="sem-chip badge-green">Success</span>
+          <div class="sem-hex">#13C96F</div>
+          <div class="sem-label">Confirmations, completed actions, positive states</div>
+        </div>
+        <div class="sem-card">
+          <span class="sem-chip badge-gold">Warning</span>
+          <div class="sem-hex">#F5A623</div>
+          <div class="sem-label">Caution notices, pending states, non-critical alerts</div>
+        </div>
+        <div class="sem-card">
+          <span class="sem-chip badge-error">Error</span>
+          <div class="sem-hex">#E84B4B</div>
+          <div class="sem-label">Failures, destructive actions, validation errors</div>
+        </div>
+        <div class="sem-card">
+          <span class="sem-chip badge-navy">Info</span>
+          <div class="sem-hex">#4B9AE8</div>
+          <div class="sem-label">Informational messages, tips, neutral notifications</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Surface + Text tokens -->
+    <div class="subsec ani">
+      <div class="sub-title">Surface & Text Tokens</div>
+      <div class="g2">
+        <div>
+          <div class="sub-title" style="margin-bottom:12px">Surfaces (dark theme)</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="flex items-c gap-3">
+              <div style="width:40px;height:40px;border-radius:var(--r-md);background:#040810;border:1px solid var(--bd);flex-shrink:0"></div>
+              <div><div class="text-xs text-mono" style="color:var(--g400)">--atlas-surface-page</div><div class="text-xs text-t">#040810 · Deepest background</div></div>
+            </div>
+            <div class="flex items-c gap-3">
+              <div style="width:40px;height:40px;border-radius:var(--r-md);background:#080E1C;border:1px solid var(--bd);flex-shrink:0"></div>
+              <div><div class="text-xs text-mono" style="color:var(--g400)">--atlas-surface-base</div><div class="text-xs text-t">#080E1C · Main page surface</div></div>
+            </div>
+            <div class="flex items-c gap-3">
+              <div style="width:40px;height:40px;border-radius:var(--r-md);background:#0D142E;border:1px solid var(--bd);flex-shrink:0"></div>
+              <div><div class="text-xs text-mono" style="color:var(--g400)">--atlas-surface-raised</div><div class="text-xs text-t">#0D142E · Cards, panels</div></div>
+            </div>
+            <div class="flex items-c gap-3">
+              <div style="width:40px;height:40px;border-radius:var(--r-md);background:#131D46;border:1px solid var(--bd);flex-shrink:0"></div>
+              <div><div class="text-xs text-mono" style="color:var(--g400)">--atlas-surface-overlay</div><div class="text-xs text-t">#131D46 · Modals, popovers</div></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sub-title" style="margin-bottom:12px">Text hierarchy</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><div style="font-size:16px;font-weight:600;color:#F0F4FF">Primary text</div><div class="text-xs text-mono text-t">#F0F4FF · --atlas-text-primary</div></div>
+            <div><div style="font-size:16px;color:#A8BAD0">Secondary text</div><div class="text-xs text-mono text-t">#A8BAD0 · --atlas-text-secondary</div></div>
+            <div><div style="font-size:16px;color:#5A6E88">Tertiary / muted</div><div class="text-xs text-mono text-t">#5A6E88 · --atlas-text-tertiary</div></div>
+            <div><div style="font-size:16px;color:#3DD98A">Brand emphasis</div><div class="text-xs text-mono text-t">#3DD98A · --atlas-text-brand</div></div>
+            <div><div style="font-size:16px;color:#F7BA52">Gold emphasis</div><div class="text-xs text-mono text-t">#F7BA52 · --atlas-text-gold</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     TYPOGRAPHY
+═══════════════════════════════════════ -->
+<section id="typography" class="section">
+  <div class="container">
+    <div class="sec-label">02 — Foundations</div>
+    <h2 class="sec-title">Typography</h2>
+    <p class="sec-desc">Three deliberate font families: Fraunces for editorial presence, Plus Jakarta Sans for clarity at any size, JetBrains Mono for code and data.</p>
+
+    <!-- Font families -->
+    <div class="subsec ani">
+      <div class="sub-title">Font Families</div>
+      <div class="font-card">
+        <div class="font-tag">Display · Fraunces · var(--atlas-font-display)</div>
+        <div class="font-sample-display">The Atlas Way.</div>
+        <div class="font-sample-display" style="font-style:italic;font-weight:300">Reclaim your time.</div>
+        <div class="font-abc" style="font-family:var(--fd)">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z<br>a b c d e f g h i j k l m n o p q r s t u v w x y z · 0 1 2 3 4 5 6 7 8 9</div>
+        <div class="font-meta">
+          <span class="font-meta-item">Optical sizing 9–144</span>
+          <span class="font-meta-item">Italic axis</span>
+          <span class="font-meta-item">300–900 weight</span>
+          <span class="font-meta-item">Google Fonts</span>
+        </div>
+      </div>
+      <div class="font-card">
+        <div class="font-tag">Sans · Plus Jakarta Sans · var(--atlas-font-sans)</div>
+        <div class="font-sample-sans">Built for executives who move fast.</div>
+        <div class="font-sample-sans" style="font-weight:300">Delegate. Reclaim. Scale.</div>
+        <div class="font-abc">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z<br>a b c d e f g h i j k l m n o p q r s t u v w x y z · 0 1 2 3 4 5 6 7 8 9</div>
+        <div class="font-meta">
+          <span class="font-meta-item">300–800 weight</span>
+          <span class="font-meta-item">UI optimized</span>
+          <span class="font-meta-item">Google Fonts</span>
+        </div>
+      </div>
+      <div class="font-card">
+        <div class="font-tag">Mono · JetBrains Mono · var(--atlas-font-mono)</div>
+        <div class="font-sample-mono">--atlas-green-500: #13C96F;<br>const hours = 10; // saved/week</div>
+        <div class="font-abc" style="font-family:var(--fm)">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z<br>0 1 2 3 4 5 6 7 8 9 { } ( ) [ ] ; : . , = + - * / < > &</div>
+        <div class="font-meta">
+          <span class="font-meta-item">Code & data</span>
+          <span class="font-meta-item">Token display</span>
+          <span class="font-meta-item">Google Fonts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Type scale -->
+    <div class="subsec ani">
+      <div class="sub-title">Type Scale</div>
+      <div class="type-scale">
+        <div class="type-row" style="background:rgba(255,255,255,0.02)">
+          <div class="type-code">7xl</div>
+          <div class="type-text" style="font-size:4.5rem;font-weight:700">Atlas</div>
+          <div class="type-px">72px</div>
+          <div class="type-lh">1.08 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">6xl</div>
+          <div class="type-text" style="font-size:3.75rem;font-weight:700">Atlas</div>
+          <div class="type-px">60px</div>
+          <div class="type-lh">1.1 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">5xl</div>
+          <div class="type-text" style="font-size:3rem;font-weight:600">Eliminate Overwhelm</div>
+          <div class="type-px">48px</div>
+          <div class="type-lh">1.2 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">4xl</div>
+          <div class="type-text" style="font-size:2.25rem;font-weight:600">10 Hours Back Every Week</div>
+          <div class="type-px">36px</div>
+          <div class="type-lh">1.25 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">3xl</div>
+          <div class="type-text" style="font-size:1.875rem;font-weight:600">Your Executive Assistant</div>
+          <div class="type-px">30px</div>
+          <div class="type-lh">1.3 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">2xl</div>
+          <div class="type-text" style="font-size:1.5rem;font-weight:600;font-family:var(--fs)">Section heading for features</div>
+          <div class="type-px">24px</div>
+          <div class="type-lh">1.4 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">xl</div>
+          <div class="type-text" style="font-size:1.25rem;font-weight:500;font-family:var(--fs)">Card heading / sub-section</div>
+          <div class="type-px">20px</div>
+          <div class="type-lh">1.5 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">lg</div>
+          <div class="type-text" style="font-size:1.125rem;font-family:var(--fs)">Lead paragraph or intro text for sections that need extra breath.</div>
+          <div class="type-px">18px</div>
+          <div class="type-lh">1.65 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">base</div>
+          <div class="type-text" style="font-size:1rem;font-family:var(--fs)">Body text — the workhorse. Clear, readable at all lengths.</div>
+          <div class="type-px">16px</div>
+          <div class="type-lh">1.6 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">sm</div>
+          <div class="type-text" style="font-size:.875rem;font-family:var(--fs)">Small text — captions, hints, secondary metadata.</div>
+          <div class="type-px">14px</div>
+          <div class="type-lh">1.5 lh</div>
+        </div>
+        <div class="type-row">
+          <div class="type-code">xs</div>
+          <div class="type-text" style="font-size:.75rem;font-family:var(--fs)">Labels, timestamps, legal / micro-copy. Use sparingly.</div>
+          <div class="type-px">12px</div>
+          <div class="type-lh">1.4 lh</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     SPACING
+═══════════════════════════════════════ -->
+<section id="spacing" class="section">
+  <div class="container">
+    <div class="sec-label">03 — Foundations</div>
+    <h2 class="sec-title">Spacing, Radius & Shadows</h2>
+    <p class="sec-desc">A 4px base grid governs all layout decisions. Every margin, padding, and gap should reference a spacing token.</p>
+
+    <div class="g2 mb-8">
+      <!-- Spacing scale -->
+      <div class="subsec ani">
+        <div class="sub-title">Spacing Scale</div>
+        <div class="space-rows">
+          <div class="space-row"><span class="space-token">space-1</span><div class="space-bar" style="width:4px"></div><span class="space-val">4px</span></div>
+          <div class="space-row"><span class="space-token">space-2</span><div class="space-bar" style="width:8px"></div><span class="space-val">8px</span></div>
+          <div class="space-row"><span class="space-token">space-3</span><div class="space-bar" style="width:12px"></div><span class="space-val">12px</span></div>
+          <div class="space-row"><span class="space-token">space-4</span><div class="space-bar" style="width:16px"></div><span class="space-val">16px</span></div>
+          <div class="space-row"><span class="space-token">space-5</span><div class="space-bar" style="width:20px"></div><span class="space-val">20px</span></div>
+          <div class="space-row"><span class="space-token">space-6</span><div class="space-bar" style="width:24px"></div><span class="space-val">24px</span></div>
+          <div class="space-row"><span class="space-token">space-8</span><div class="space-bar" style="width:32px"></div><span class="space-val">32px</span></div>
+          <div class="space-row"><span class="space-token">space-10</span><div class="space-bar" style="width:40px"></div><span class="space-val">40px</span></div>
+          <div class="space-row"><span class="space-token">space-12</span><div class="space-bar" style="width:48px"></div><span class="space-val">48px</span></div>
+          <div class="space-row"><span class="space-token">space-16</span><div class="space-bar" style="width:64px"></div><span class="space-val">64px</span></div>
+          <div class="space-row"><span class="space-token">space-20</span><div class="space-bar" style="width:80px"></div><span class="space-val">80px</span></div>
+          <div class="space-row"><span class="space-token">space-24</span><div class="space-bar" style="width:96px"></div><span class="space-val">96px</span></div>
+          <div class="space-row"><span class="space-token">space-32</span><div class="space-bar" style="width:128px"></div><span class="space-val">128px</span></div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Border radius -->
+        <div class="subsec ani">
+          <div class="sub-title">Border Radius</div>
+          <div class="radius-grid">
+            <div class="radius-item"><div class="radius-box" style="border-radius:4px"></div><span class="radius-label">sm<br>4px</span></div>
+            <div class="radius-item"><div class="radius-box" style="border-radius:8px"></div><span class="radius-label">md<br>8px</span></div>
+            <div class="radius-item"><div class="radius-box" style="border-radius:12px"></div><span class="radius-label">lg<br>12px</span></div>
+            <div class="radius-item"><div class="radius-box" style="border-radius:16px"></div><span class="radius-label">xl<br>16px</span></div>
+            <div class="radius-item"><div class="radius-box" style="border-radius:24px"></div><span class="radius-label">2xl<br>24px</span></div>
+            <div class="radius-item"><div class="radius-box" style="border-radius:9999px"></div><span class="radius-label">full<br>∞</span></div>
+          </div>
+        </div>
+
+        <!-- Shadows -->
+        <div class="subsec ani">
+          <div class="sub-title">Shadows</div>
+          <div class="shadow-grid">
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-sm)"></div><span class="shadow-label">shadow-sm</span></div>
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-md)"></div><span class="shadow-label">shadow-md</span></div>
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-lg)"></div><span class="shadow-label">shadow-lg</span></div>
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-xl)"></div><span class="shadow-label">shadow-xl</span></div>
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-gg)"></div><span class="shadow-label">glow-green</span></div>
+            <div class="shadow-item"><div class="shadow-box" style="box-shadow:var(--sh-gd)"></div><span class="shadow-label">glow-gold</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     COMPONENTS
+═══════════════════════════════════════ -->
+<section id="components" class="section">
+  <div class="container">
+    <div class="sec-label">04 — Components</div>
+    <h2 class="sec-title">Component Library</h2>
+    <p class="sec-desc">Copy-ready components built on the token system. Every component respects the color, spacing, and motion tokens defined above.</p>
+
+    <!-- BUTTONS -->
+    <div class="subsec ani">
+      <div class="sub-title">Buttons</div>
+      <div class="sandbox">
+        <div class="flex items-c gap-3 mb-6 flex-wrap">
+          <button class="btn btn-primary btn-xl">Get Started</button>
+          <button class="btn btn-primary btn-lg">Book a Call</button>
+          <button class="btn btn-primary btn-md">Confirm</button>
+          <button class="btn btn-primary btn-sm">Submit</button>
+        </div>
+        <div class="flex items-c gap-3 mb-6 flex-wrap">
+          <button class="btn btn-secondary btn-lg">Learn More</button>
+          <button class="btn btn-ghost btn-lg">Cancel</button>
+          <button class="btn btn-gold btn-lg">⚡ Upgrade</button>
+          <button class="btn btn-danger btn-lg">Delete</button>
+        </div>
+        <div class="flex items-c gap-3 flex-wrap">
+          <button class="btn btn-primary btn-md" disabled>Disabled</button>
+          <button class="btn btn-primary btn-md">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            With Icon
+          </button>
+          <button class="btn btn-ghost btn-icon">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 6v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sandbox-code">
+<pre><span class="code-c">/* Primary */</span>
+&lt;button class="btn btn-primary btn-lg"&gt;Get Started&lt;/button&gt;
+
+<span class="code-c">/* Secondary / Ghost / Gold / Danger */</span>
+&lt;button class="btn btn-<span class="code-d">{secondary|ghost|gold|danger}</span> btn-md"&gt;...&lt;/button&gt;
+
+<span class="code-c">/* Sizes: btn-sm · btn-md · btn-lg · btn-xl */</span>
+<span class="code-c">/* Disabled: add disabled attribute */</span></pre>
+      </div>
+    </div>
+
+    <!-- INPUTS -->
+    <div class="subsec ani">
+      <div class="sub-title">Form Inputs</div>
+      <div class="sandbox">
+        <div class="g2 gap-6">
+          <div class="flex flex-col gap-5">
+            <div class="field">
+              <label class="field-label field-label-req">Full Name</label>
+              <input class="input" type="text" placeholder="Jane Smith">
+              <span class="field-hint">As it appears on official documents</span>
+            </div>
+            <div class="field">
+              <label class="field-label">Email Address</label>
+              <input class="input" type="email" placeholder="jane@company.com">
+            </div>
+            <div class="field">
+              <label class="field-label">Error State</label>
+              <input class="input input-error" type="text" value="invalid@">
+              <span class="field-error">Please enter a valid email address</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-5">
+            <div class="field">
+              <label class="field-label">Role</label>
+              <div class="sel-wrap">
+                <select class="input">
+                  <option>Executive Assistant</option>
+                  <option>Operations Manager</option>
+                  <option>Chief of Staff</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Notes</label>
+              <textarea class="input" placeholder="Add any context for your EA..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="subsec ani">
+      <div class="sub-title">Cards</div>
+      <div class="sandbox">
+        <div class="g4 gap-4">
+          <div class="card">
+            <div class="badge badge-green mb-3">Active</div>
+            <div style="font-size:15px;font-weight:700;color:var(--tp);margin-bottom:6px">Default Card</div>
+            <div style="font-size:13px;color:var(--ts)">Standard surface for content, lists, and info groupings.</div>
+          </div>
+          <div class="card card-elevated">
+            <div class="badge badge-gold mb-3">Premium</div>
+            <div style="font-size:15px;font-weight:700;color:var(--tp);margin-bottom:6px">Elevated Card</div>
+            <div style="font-size:13px;color:var(--ts)">Higher z-index surface with pre-applied shadow.</div>
+          </div>
+          <div class="card card-green">
+            <div class="badge badge-green mb-3">Brand</div>
+            <div style="font-size:15px;font-weight:700;color:var(--tp);margin-bottom:6px">Brand Card</div>
+            <div style="font-size:13px;color:var(--ts)">Green top border to signal primary or featured content.</div>
+          </div>
+          <div class="card card-gold">
+            <div class="badge badge-gold mb-3">Gold</div>
+            <div style="font-size:15px;font-weight:700;color:var(--tp);margin-bottom:6px">Gold Card</div>
+            <div style="font-size:13px;color:var(--ts)">Gold top border for VIP, awards, or highlights.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="subsec ani">
+      <div class="sub-title">Badges</div>
+      <div class="sandbox">
+        <div class="flex gap-3 flex-wrap">
+          <span class="badge badge-green">Active</span>
+          <span class="badge badge-gold">Premium</span>
+          <span class="badge badge-navy">Processing</span>
+          <span class="badge badge-error">Overdue</span>
+          <span class="badge badge-neutral">Archived</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="subsec ani">
+      <div class="sub-title">Alerts</div>
+      <div class="sandbox">
+        <div class="alert alert-success">
+          <span class="alert-icon">✓</span>
+          <div class="alert-body">
+            <div class="alert-title">EA Successfully Matched</div>
+            <div class="alert-desc">Your executive assistant has been assigned. Expect an intro email within 24 hours.</div>
+          </div>
+        </div>
+        <div class="alert alert-warning">
+          <span class="alert-icon">⚠</span>
+          <div class="alert-body">
+            <div class="alert-title">Action Required</div>
+            <div class="alert-desc">Please complete your onboarding checklist before your first sync call.</div>
+          </div>
+        </div>
+        <div class="alert alert-error">
+          <span class="alert-icon">✕</span>
+          <div class="alert-body">
+            <div class="alert-title">Submission Failed</div>
+            <div class="alert-desc">We couldn't process your request. Please check your details and try again.</div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          <span class="alert-icon">ℹ</span>
+          <div class="alert-body">
+            <div class="alert-title">Energy Audit Scheduled</div>
+            <div class="alert-desc">Your workflow analysis is booked for next Monday at 10:00 AM EST.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS + PROGRESS -->
+    <div class="subsec ani">
+      <div class="sub-title">Stats & Progress</div>
+      <div class="sandbox">
+        <div class="g4 gap-4 mb-6">
+          <div class="stat">
+            <div class="stat-label">Hours Saved</div>
+            <div class="stat-val" style="color:var(--tb)">10.4</div>
+            <div class="stat-change up">↑ 12% this week</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Tasks Delegated</div>
+            <div class="stat-val">247</div>
+            <div class="stat-change up">↑ 34 new</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Response Time</div>
+            <div class="stat-val" style="color:var(--tg)">8m</div>
+            <div class="stat-change up">↓ 2m faster</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Client Score</div>
+            <div class="stat-val">9.8</div>
+            <div class="stat-change dn">↓ 0.1</div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tt);margin-bottom:6px">
+            <span>Onboarding Progress</span><span>72%</span>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:72%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--tt);margin-bottom:6px;margin-top:12px">
+            <span>Premium Features Used</span><span>45%</span>
+          </div>
+          <div class="progress"><div class="progress-fill progress-gold" style="width:45%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVATARS + TOGGLE -->
+    <div class="subsec ani">
+      <div class="sub-title">Avatars & Toggles</div>
+      <div class="sandbox">
+        <div class="flex items-c gap-6 mb-6 flex-wrap">
+          <div class="flex items-c gap-3">
+            <div class="av av-xl av-green">JD</div>
+            <div class="av av-lg av-gold">SA</div>
+            <div class="av av-md">TK</div>
+            <div class="av av-sm">AB</div>
+          </div>
+          <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:12px">
+            <div class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')">
+              <div class="toggle on"></div>
+              <span class="toggle-text">AI Summaries enabled</span>
+            </div>
+            <div class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')">
+              <div class="toggle"></div>
+              <span class="toggle-text">Email digest notifications</span>
+            </div>
+            <div class="toggle-wrap" onclick="this.querySelector('.toggle').classList.toggle('on')">
+              <div class="toggle on"></div>
+              <span class="toggle-text">Calendar sync active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS + STEPPER -->
+    <div class="subsec ani">
+      <div class="sub-title">Navigation — Tabs & Stepper</div>
+      <div class="sandbox">
+        <div class="tabs mb-8">
+          <button class="tab active" onclick="setTab(event)">Overview</button>
+          <button class="tab" onclick="setTab(event)">Tasks</button>
+          <button class="tab" onclick="setTab(event)">Reports</button>
+          <button class="tab" onclick="setTab(event)">Settings</button>
+        </div>
+
+        <div class="stepper">
+          <div class="step">
+            <div class="step-c done">✓</div>
+            <span class="step-t">Intake Call</span>
+          </div>
+          <div class="step-line done"></div>
+          <div class="step">
+            <div class="step-c done">✓</div>
+            <span class="step-t">Energy Audit</span>
+          </div>
+          <div class="step-line done"></div>
+          <div class="step">
+            <div class="step-c active">3</div>
+            <span class="step-t active">EA Matching</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <div class="step-c">4</div>
+            <span class="step-t">Onboarding</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SKELETON -->
+    <div class="subsec ani">
+      <div class="sub-title">Loading States — Skeleton</div>
+      <div class="sandbox">
+        <div class="flex gap-4 items-s">
+          <div class="skel" style="width:52px;height:52px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+            <div class="skel" style="height:16px;width:55%"></div>
+            <div class="skel" style="height:13px;width:80%"></div>
+            <div class="skel" style="height:13px;width:65%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     MOTION
+═══════════════════════════════════════ -->
+<section id="motion" class="section">
+  <div class="container">
+    <div class="sec-label">05 — Motion</div>
+    <h2 class="sec-title">Motion System</h2>
+    <p class="sec-desc">Motion adds meaning, not decoration. Hover the boxes below to see each easing in action. Use spring for interactive feedback, ease-out for reveals.</p>
+
+    <div class="subsec ani">
+      <div class="sub-title">Easing & Animation Demos (hover each)</div>
+      <div class="motion-grid mb-8">
+        <div class="motion-box"><div class="motion-icon">↑</div>Slide Up</div>
+        <div class="motion-box fx-slide"><div class="motion-icon">↔</div>Translate</div>
+        <div class="motion-box fx-spin"><div class="motion-icon">↻</div>Rotate</div>
+        <div class="motion-box fx-bounce"><div class="motion-icon">●</div>Bounce</div>
+        <div class="motion-box"><div class="motion-icon" style="transition:transform .3s cubic-bezier(0.34,1.56,0.64,1)">⊕</div>Spring</div>
+      </div>
+    </div>
+
+    <div class="subsec ani">
+      <div class="sub-title">Duration Tokens</div>
+      <table class="token-tbl">
+        <thead>
+          <tr><th>Token</th><th>Value</th><th>Use case</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>--atlas-dur-instant</td><td>50ms</td><td>Immediate visual feedback — focus rings, checkbox ticks</td></tr>
+          <tr><td>--atlas-dur-fast</td><td>100ms</td><td>Hover states, small icon transforms</td></tr>
+          <tr><td>--atlas-dur-normal</td><td>200ms</td><td>Most transitions — buttons, inputs, color swaps</td></tr>
+          <tr><td>--atlas-dur-slow</td><td>350ms</td><td>Panels opening, cards entering, modal fade</td></tr>
+          <tr><td>--atlas-dur-slower</td><td>500ms</td><td>Page-level reveals, hero animations</td></tr>
+          <tr><td>--atlas-dur-slowest</td><td>800ms</td><td>Complex orchestrated sequences only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsec ani">
+      <div class="sub-title">Easing Tokens</div>
+      <table class="token-tbl">
+        <thead>
+          <tr><th>Token</th><th>Curve</th><th>Use case</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>--atlas-ease-default</td><td>cubic-bezier(0.2, 0, 0, 1)</td><td>Standard interactions — most transitions</td></tr>
+          <tr><td>--atlas-ease-in</td><td>cubic-bezier(0.4, 0, 1, 1)</td><td>Elements exiting the screen</td></tr>
+          <tr><td>--atlas-ease-out</td><td>cubic-bezier(0, 0, 0.2, 1)</td><td>Elements entering the screen / reveals</td></tr>
+          <tr><td>--atlas-ease-in-out</td><td>cubic-bezier(0.4, 0, 0.2, 1)</td><td>In-place transformations, resizing</td></tr>
+          <tr><td>--atlas-ease-spring</td><td>cubic-bezier(0.34, 1.56, 0.64, 1)</td><td>Interactive: toggles, scale, confirm feedback</td></tr>
+          <tr><td>--atlas-ease-bounce</td><td>cubic-bezier(0.68, -0.55, 0.265, 1.55)</td><td>Playful moments — modals, notifications</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsec ani">
+      <div class="sub-title">Animation Principles</div>
+      <div class="g3">
+        <div class="card card-green">
+          <div style="font-size:24px;margin-bottom:12px">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:var(--tp);margin-bottom:6px">Purpose over flair</div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.6">Every animation should communicate something: state change, direction, hierarchy. If you can't explain why it moves, remove it.</div>
+        </div>
+        <div class="card card-green">
+          <div style="font-size:24px;margin-bottom:12px">⚡</div>
+          <div style="font-size:14px;font-weight:700;color:var(--tp);margin-bottom:6px">Fast enough to feel instant</div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.6">UI transitions should never feel slow. Default to 200ms. Only go slower for content reveals or complex orchestration.</div>
+        </div>
+        <div class="card card-green">
+          <div style="font-size:24px;margin-bottom:12px">♿</div>
+          <div style="font-size:14px;font-weight:700;color:var(--tp);margin-bottom:6px">Respect prefers-reduced-motion</div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.6">Always wrap animations with a <code style="font-family:var(--fm);font-size:11px;color:var(--g400)">@media (prefers-reduced-motion: reduce)</code> override that removes transitions.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     USAGE / RESOURCES
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="sec-label">06 — Resources</div>
+    <h2 class="sec-title">How to Use This System</h2>
+    <p class="sec-desc">Three files. Drop them into any Atlas project and you're on-brand immediately.</p>
+
+    <div class="g3 ani">
+      <div class="card card-gold">
+        <div style="font-family:var(--fm);font-size:11px;color:var(--d400);margin-bottom:12px;font-weight:700">FILE 1</div>
+        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:8px">tokens.css</div>
+        <div style="font-size:13px;color:var(--ts);line-height:1.6;margin-bottom:16px">All CSS custom properties (--atlas-*). Import once at the root of any project. Works in vanilla HTML, React, Vue — anything.</div>
+        <code style="font-family:var(--fm);font-size:12px;color:var(--g400);background:var(--so);padding:8px 12px;border-radius:var(--r-md);display:block">@import './design-system/tokens.css';</code>
+      </div>
+      <div class="card card-gold">
+        <div style="font-family:var(--fm);font-size:11px;color:var(--d400);margin-bottom:12px;font-weight:700">FILE 2</div>
+        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:8px">tailwind.preset.js</div>
+        <div style="font-size:13px;color:var(--ts);line-height:1.6;margin-bottom:16px">Drop into any Tailwind project. Adds all atlas.* color classes, font families, animations, and custom utilities.</div>
+        <code style="font-family:var(--fm);font-size:12px;color:var(--g400);background:var(--so);padding:8px 12px;border-radius:var(--r-md);display:block">presets: [require('./design-system/tailwind.preset')]</code>
+      </div>
+      <div class="card card-gold">
+        <div style="font-family:var(--fm);font-size:11px;color:var(--d400);margin-bottom:12px;font-weight:700">FILE 3</div>
+        <div style="font-size:16px;font-weight:700;color:var(--tp);margin-bottom:8px">index.html</div>
+        <div style="font-size:13px;color:var(--ts);line-height:1.6;margin-bottom:16px">This page. Open it in any browser for the full visual reference. Share the link with teammates, include in project READMEs.</div>
+        <code style="font-family:var(--fm);font-size:12px;color:var(--g400);background:var(--so);padding:8px 12px;border-radius:var(--r-md);display:block">open design-system/index.html</code>
+      </div>
+    </div>
+
+    <div class="ani mt-4" style="margin-top:32px">
+      <div class="alert alert-info" style="margin-bottom:0">
+        <span class="alert-icon">💡</span>
+        <div class="alert-body">
+          <div class="alert-title">Google Fonts required</div>
+          <div class="alert-desc">Include this in the <code style="font-family:var(--fm);font-size:12px">&lt;head&gt;</code> of every project: <code style="font-family:var(--fm);font-size:12px;color:var(--g400)">https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="flex items-c gap-3 mb-2">
+          <div class="logo-mark" style="width:28px;height:28px;font-size:13px">A</div>
+          <span style="font-size:14px;font-weight:700;color:var(--ts)">Atlas Assistants Design System</span>
+        </div>
+        <div class="footer-text">Version 1.0 · Internal use · atlasassistants.com</div>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text">Built for the Atlas team ·</span>
+        <span class="badge badge-green">Dark Theme</span>
+        <span class="badge badge-neutral">v1.0</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  // Tab switcher demo
+  function setTab(e) {
+    const tabs = e.target.closest('.tabs');
+    tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+  }
+
+  // Scroll-triggered animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('show'), i * 60);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.ani').forEach(el => observer.observe(el));
+
+  // Swatch copy-to-clipboard on click
+  document.querySelectorAll('.pal').forEach(el => {
+    el.addEventListener('click', () => {
+      const hex = el.title.split(' ')[0];
+      navigator.clipboard?.writeText(hex).then(() => {
+        el.style.outline = '2px solid #3DD98A';
+        el.style.outlineOffset = '2px';
+        setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = ''; }, 800);
+      });
+    });
+  });
+</script>
+</body>
+</html>
