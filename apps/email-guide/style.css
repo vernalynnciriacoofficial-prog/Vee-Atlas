@@ -297,3 +297,23 @@ a { color: inherit; text-decoration: none; }
   padding-top: 0.75rem;
   line-height: 1.6;
 }
+
+/* === Mobile (max 768px) === */
+@media (max-width: 768px) {
+  .nav { padding: 0 1rem; }
+  .nav-brand { font-size: 0.875rem; }
+  .nav-links { gap: 1rem; }
+  .nav-links a { font-size: 0.75rem; }
+
+  .hero { padding: 2.5rem 1.25rem; }
+  .hero h1 { font-size: 1.5rem; }
+  .hero p { font-size: 1rem; }
+
+  .section__inner { padding: 0 1.25rem; }
+  .section { padding: 2.5rem 0; }
+
+  .card-grid { grid-template-columns: 1fr; }
+  .decision-grid { grid-template-columns: 1fr; }
+
+  .step-number { width: 32px; height: 32px; font-size: 0.875rem; }
+}
