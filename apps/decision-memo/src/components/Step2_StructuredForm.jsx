@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useClaude } from '../hooks/useClaude';
 import { buildGenerateMemoPrompt } from '../prompts/generateMemo';
 import { validateGenerateMemo } from '../utils/validateJson';
+import { DEMO_MEMO } from '../demo';
 
 function Field({ label, value, onChange, multiline, className = '' }) {
   const base = 'w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
@@ -118,6 +119,13 @@ export default function Step2_StructuredForm({ initialData, apiKey, onComplete, 
             className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
           >
             ← Back
+          </button>
+          <button
+            onClick={() => onComplete({ ...DEMO_MEMO, title: data.title })}
+            disabled={loading}
+            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-500 disabled:opacity-40"
+          >
+            Try demo
           </button>
           <button
             onClick={handleGenerate}

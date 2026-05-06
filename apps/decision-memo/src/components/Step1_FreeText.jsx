@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useClaude } from '../hooks/useClaude';
 import { buildExtractStructurePrompt } from '../prompts/extractStructure';
 import { validateExtractStructure } from '../utils/validateJson';
+import { DEMO_EXTRACT } from '../demo';
 
 export default function Step1_FreeText({ apiKey, onComplete }) {
   const [text, setText] = useState('');
@@ -37,13 +38,22 @@ export default function Step1_FreeText({ apiKey, onComplete }) {
         {error && (
           <p className="text-red-600 text-sm mt-2">{error}</p>
         )}
-        <button
-          onClick={handleAnalyse}
-          disabled={loading || text.trim().length < 20}
-          className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
-        >
-          {loading ? 'Analysing…' : 'Analyse →'}
-        </button>
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            onClick={handleAnalyse}
+            disabled={loading || text.trim().length < 20}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+          >
+            {loading ? 'Analysing…' : 'Analyse →'}
+          </button>
+          <button
+            onClick={() => onComplete(DEMO_EXTRACT)}
+            disabled={loading}
+            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-500 disabled:opacity-40"
+          >
+            Try demo
+          </button>
+        </div>
       </div>
     </div>
   );
