@@ -2,11 +2,7 @@ import { useState } from 'react';
 import ApiKeyGate from './components/ApiKeyGate';
 import Step1_FreeText from './components/Step1_FreeText';
 import Step2_StructuredForm from './components/Step2_StructuredForm';
-
-// Step components imported in later tasks — stubs used for now
-function StepPlaceholder({ label }) {
-  return <div className="p-12 text-center text-gray-400 text-sm">{label}</div>;
-}
+import Step3_Memo from './components/Step3_Memo';
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('dmg_api_key') || '');
@@ -38,7 +34,10 @@ export default function App() {
         />
       )}
       {step === 3 && (
-        <StepPlaceholder label="Step 3 — Memo Output (coming soon)" />
+        <Step3_Memo
+          memoData={memoData}
+          onBack={() => setStep(2)}
+        />
       )}
     </div>
   );
