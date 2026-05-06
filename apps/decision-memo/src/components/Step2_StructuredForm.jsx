@@ -127,13 +127,22 @@ export default function Step2_StructuredForm({ initialData, apiKey, onComplete, 
           >
             Try demo
           </button>
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
-          >
-            {loading ? 'Generating…' : 'Generate Memo →'}
-          </button>
+          {apiKey ? (
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+            >
+              {loading ? 'Generating…' : 'Generate Memo →'}
+            </button>
+          ) : (
+            <button
+              onClick={onBack}
+              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm font-medium"
+            >
+              Add API key to Generate →
+            </button>
+          )}
         </div>
       </div>
     </div>

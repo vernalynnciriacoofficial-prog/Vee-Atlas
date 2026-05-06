@@ -6,16 +6,21 @@ import Step3_Memo from './components/Step3_Memo';
 
 export default function App() {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('dmg_api_key') || '');
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => (localStorage.getItem('dmg_api_key') ? 1 : 0));
   const [structuredData, setStructuredData] = useState(null);
   const [memoData, setMemoData] = useState(null);
 
   function handleApiKey(key) {
     localStorage.setItem('dmg_api_key', key);
     setApiKey(key);
+    setStep(1);
   }
 
-  if (!apiKey) return <ApiKeyGate onSubmit={handleApiKey} />;
+  function handleDemo() {
+    setStep(1);
+  }
+
+  if (step === 0) return <ApiKeyGate onSubmit={handleApiKey} onDemo={handleDemo} />;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -23,6 +28,7 @@ export default function App() {
         <Step1_FreeText
           apiKey={apiKey}
           onComplete={data => { setStructuredData(data); setStep(2); }}
+          onBack={() => setStep(0)}
         />
       )}
       {step === 2 && (

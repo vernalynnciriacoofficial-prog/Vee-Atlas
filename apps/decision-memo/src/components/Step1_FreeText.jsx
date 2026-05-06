@@ -4,7 +4,7 @@ import { buildExtractStructurePrompt } from '../prompts/extractStructure';
 import { validateExtractStructure } from '../utils/validateJson';
 import { DEMO_EXTRACT } from '../demo';
 
-export default function Step1_FreeText({ apiKey, onComplete }) {
+export default function Step1_FreeText({ apiKey, onComplete, onBack }) {
   const [text, setText] = useState('');
   const [error, setError] = useState(null);
   const { loading, call } = useClaude(apiKey);
@@ -38,14 +38,23 @@ export default function Step1_FreeText({ apiKey, onComplete }) {
         {error && (
           <p className="text-red-600 text-sm mt-2">{error}</p>
         )}
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            onClick={handleAnalyse}
-            disabled={loading || text.trim().length < 20}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
-          >
-            {loading ? 'Analysing…' : 'Analyse →'}
-          </button>
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
+          {apiKey ? (
+            <button
+              onClick={handleAnalyse}
+              disabled={loading || text.trim().length < 20}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-medium"
+            >
+              {loading ? 'Analysing…' : 'Analyse →'}
+            </button>
+          ) : (
+            <button
+              onClick={onBack}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-sm font-medium"
+            >
+              Add API key to Analyse →
+            </button>
+          )}
           <button
             onClick={() => onComplete(DEMO_EXTRACT)}
             disabled={loading}
