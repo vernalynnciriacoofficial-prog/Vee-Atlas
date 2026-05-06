@@ -108,3 +108,93 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.875rem;
   color: var(--text-muted);
 }
+
+/* === Card Grid === */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+/* === Category Cards === */
+.category-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--card-color, #ccc);
+  box-shadow: var(--card-shadow);
+  padding: 1.25rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--card-color, #ccc);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.card-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--card-color, #333);
+}
+
+.folder-tree { margin-bottom: 1rem; }
+
+.folder-tree > li,
+.folder-tree ul li {
+  font-size: 0.8125rem;
+  padding: 0.1rem 0;
+  font-family: "SF Mono", "Consolas", "Courier New", monospace;
+}
+
+.folder-tree > li::before { content: "📁 "; }
+.folder-tree ul { padding-left: 1.25rem; }
+.folder-tree ul li::before { content: "└ "; }
+.folder-tree ul ul { padding-left: 1rem; }
+.folder-tree ul ul li::before { content: "  └ "; }
+
+.email-examples {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.examples-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.examples-text {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Card accent colors */
+.card--clients      { --card-color: #1565c0; }
+.card--transactions { --card-color: #2e7d32; }
+.card--listings     { --card-color: #6a1b9a; }
+.card--finance      { --card-color: #e65100; }
+.card--legal        { --card-color: #b71c1c; }
+.card--vendors      { --card-color: #00695c; }
+.card--team         { --card-color: #455a64; }
+.card--leads        { --card-color: #f57f17; }
+.card--professional { --card-color: #4527a0; }
+.card--admin        { --card-color: #37474f; }
